@@ -1,7 +1,8 @@
 # Mitos
 
 A phone-first household action ledger, built from `planner-design-brief.md`
-revision 2. This repository stops at the first **Item + Everything design check**.
+revision 2. The first **Item + Everything design check** was reviewed; the
+approved cloud setup is in progress, with later feature milestones still deferred.
 The source planner has not been changed or retired.
 
 ## Run the local prototype
@@ -40,7 +41,7 @@ leaving room for the emulator's 30-second idle responses. The client uses the
 Firebase SDK's standard streaming transport and automatic long-polling fallback.
 LAN HTTP uses in-memory Firestore caching because
 it is not a secure browser context; durable offline persistence is enabled on
-localhost and the future HTTPS deployment. No service worker is installed.
+localhost and HTTPS deployments. No service worker is installed.
 
 The emulator is not a production security boundary; run the local preview only
 on your own trusted network. Stopping the emulators through the npm wrapper
@@ -79,8 +80,9 @@ With the emulator already running, use
 `demo-mitos-rules` namespace and cannot clear preview records.
 
 CI runs lint, typecheck, unit coverage, rules tests, production build and the
-item-write import boundary on pushes and pull requests. The workflow is local
-until GitHub creation/push is approved. `CLAUDE.md` records registry-resolved versions.
+item-write import boundary on pushes and pull requests in
+[Andrew-C-Blevins/mitos](https://github.com/Andrew-C-Blevins/mitos).
+`CLAUDE.md` records registry-resolved versions.
 
 ## Export
 
@@ -93,20 +95,39 @@ their complete logs and targeted proposals, household and people records, and th
 requesting user's profile. Credentials and other owners' private items are excluded.
 Settings → Export is deferred with Settings until the design checkpoint is approved.
 
-## Cloud setup is pending explicit approval
+## Approved cloud setup
 
-No Firebase, Vercel or GitHub project has been created, linked, pushed or deployed.
-`.firebaserc` names **demo-mitos**, which intentionally cannot access real services.
-Deployment needs a real project, Andrew's Google email, both real Auth UIDs,
-Google sign-in setup, reviewed environment variables and a household seed.
-The two local `.test` identities must never be copied into a live deployment.
+Firebase project **mitos-twelvedegrees** has Google sign-in enabled, the default
+Firestore database in **us-east4**, deployed rules/indexes, and the Blevins seed
+with all 39 reviewed legacy items. Andrew and Karen have real Auth UIDs; Diana is
+archived without one. Google verifies each account at sign-in. The `users` profile
+is created on first sign-in. Existing data is preserved when the seed is rerun.
 
-`npm run firebase:deploy-rules -- --approved` refuses a demo project and renders
-the env allowlist into an ignored deployment copy of the checked-in rule template.
-It is a guarded manual command, not a CI deploy. Do not run it until Andrew has
-approved the account-side changes. The future host is Vercel Hobby; the app and
-repository identifier is `mitos`. Do not take over the old planner hostname or
-stop Flask until the migration manifest is reviewed and retirement is approved.
+Vercel project **mitos** is locally linked in scope **andrew-c-blevins-projects**.
+Preview environment configuration is installed; the runtime service-account/key
+approval and Vercel GitHub app access are still pending. No hosted preview or
+end-to-end Google sign-in has been verified yet. Production is not configured.
+
+Keep `.env.local` on **demo-mitos**. `.firebaserc` defaults to that emulator project
+and has a separate `cloud` alias. Real emails and operator settings belong only in
+ignored `.env.cloud.local`; private keys must never be committed or uploaded as
+deployment source. `.vercelignore` excludes environment files, exports and tools.
+Do not pull cloud environment variables over the local emulator configuration.
+
+These explicit operator commands require an authorized Google application-default
+credential and a reviewed `.env.cloud.local` with no emulator variables:
+
+```powershell
+node --env-file=.env.cloud.local --import tsx scripts/seed-cloud.ts --apply
+node --env-file=.env.cloud.local scripts/deploy-rules.mjs --approved
+```
+
+The seed is restricted to **mitos-twelvedegrees**, validates the two-account
+allowlist, and never overwrites existing items or identity records. Rules deploy
+renders the real allowlist into an ignored copy and refuses emulator environments.
+Neither operation runs from CI. Future account changes require Andrew's approval.
+Do not take over the old planner hostname or stop Flask until the migration
+manifest is reviewed and retirement is approved.
 
 ## Explicit implementation boundaries
 

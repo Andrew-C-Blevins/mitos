@@ -2,11 +2,13 @@
 
 ## Status and stop boundary
 
-M0 local scaffold and the first M1 Item + Everything prototype. Andrew explicitly
-requires approval before ANY account-side or external mutation: creating Firebase,
-Vercel or GitHub projects; pushing; deploying rules/indexes; changing cloud env;
-or retiring Flask/the tunnel. None has been performed. Do not continue past the
-phone design checkpoint without Andrew's approval. The app/package/repo is mitos.
+The first M1 Item + Everything prototype was reviewed. Andrew approved cloud
+setup: the public GitHub repository and push, Firebase and Vercel projects,
+preview environment variables, rules/indexes deployment and household/data seed.
+This approval does not extend to later feature milestones, AI, custom DNS or
+retiring Flask/the tunnel. Runtime service-account/key approval and Vercel GitHub
+app access are still pending. Complete the hosted preview sign-in check before
+claiming cloud setup is finished. The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
 4–6 define the architecture and data; section 8 defines screens; sections 10–11
@@ -15,9 +17,13 @@ No model calls, AI SDK, agent endpoint or MCP server is enabled.
 
 ## Hosting and runtime
 
-Intended hosting: Vercel Hobby, GitHub-linked, Firebase Auth + Firestore in a
-dedicated project. Cloud configuration is not provisioned. .firebaserc selects
-demo-mitos for the local emulator only. The eventual hostname needs review;
+Hosting: Vercel Hobby project mitos in andrew-c-blevins-projects; GitHub repository
+Andrew-C-Blevins/mitos. Firebase project mitos-twelvedegrees has Google sign-in,
+Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
+The Vercel preview runtime credential and Git integration are pending.
+.firebaserc defaults to demo-mitos; cloud is an explicit separate alias.
+.env.local remains local-only; .env.cloud.local holds ignored operator config.
+Cloud env is preview-scoped; production is not configured. The hostname needs review;
 do not replace planner.twelvedegrees.studio while the old service still exists.
 Node 24 is the tested runtime (local 24.14.0); npm 11.11.0; portable Java 21 is used
 for the local Firestore emulator. No system-wide Java install. Emulator services
@@ -80,8 +86,8 @@ Registry evidence and initial latest metadata: docs/registry-versions.json.
 - lib/ai/ and app/api/mcp/: deferred-milestone documentation, no callable endpoint.
 - firestore.rules + scripts/generate-rules.mjs: default-deny schema/ACL rules;
   generator keeps all bounded proposal checkbox comparisons explicit.
-- scripts/: local-only seed, read-only legacy export, authorized personal export,
-  guarded future deploy, emulator launcher and CI boundary checks.
+- scripts/: isolated local seed, guarded cloud seed, read-only legacy export,
+  authorized personal export, guarded rules deploy and CI boundary checks.
 - tests/: domain/migration and real Firestore emulator authorization tests.
 - .github/workflows/ci.yml: lint, typecheck, test coverage, rules, build, import gate.
 
@@ -148,4 +154,5 @@ Local preview data is a real local legacy snapshot: 39 personal tasks (24 active
 15 done), no home tasks. Santa Rosa's 27 tasks and trip schedules are export-only.
 Private exports, logs, generated deployment env, emulator data and screenshots
 are ignored. A fresh Pi export and human manifest review are still required before
-retirement. Nothing is automatically pushed or deployed.
+retirement. GitHub CI passed on the initial published checkpoint. Rules deploy
+remains an explicit operator action; CI does not deploy rules or seed live data.

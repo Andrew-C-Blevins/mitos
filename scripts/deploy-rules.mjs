@@ -1,14 +1,18 @@
 // No accidental deployment from the default demo project or an ordinary npm gate.
 import { spawnSync } from 'node:child_process';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, copyFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { loadEnvFile } from 'node:process';
-try {
-  loadEnvFile('.env.local');
-} catch {
-  /* CI may supply environment directly. */
+if (!process.env.FIREBASE_PROJECT_ID) {
+  try {
+    loadEnvFile('.env.local');
+  } catch {
+    /* CI may supply environment directly. */
+  }
 }
 const project = process.env.FIREBASE_PROJECT_ID;
+if (process.env.FIRESTORE_EMULATOR_HOST || process.env.FIREBASE_AUTH_EMULATOR_HOST)
+  throw new Error('Cloud deployment must run without emulator environment variables.');
 if (!process.argv.includes('--approved') || !project || project.startsWith('demo-')) {
   throw new Error(
     'Cloud deployment is blocked. Obtain Andrew’s approval, configure a real FIREBASE_PROJECT_ID, then explicitly pass --approved.',
@@ -31,10 +35,11 @@ const rules = (await readFile('firestore.rules', 'utf8')).replace(
 );
 await mkdir('.tools/deploy', { recursive: true });
 await writeFile('.tools/deploy/firestore.rules', rules);
+await copyFile('firestore.indexes.json', '.tools/deploy/firestore.indexes.json');
 await writeFile(
   '.tools/deploy/firebase.json',
   JSON.stringify({
-    firestore: { rules: 'firestore.rules', indexes: '../../firestore.indexes.json' },
+    firestore: { rules: 'firestore.rules', indexes: 'firestore.indexes.json' },
   }),
 );
 const cli = resolve('node_modules/firebase-tools/lib/bin/firebase.js');

@@ -19,6 +19,7 @@
     "check": "npm run check:boundaries && npm run lint && npm run typecheck && npm test && npm run build",
     "emulators": "node scripts/emulators.mjs",
     "seed:local": "tsx scripts/seed-local.ts",
+    "seed:cloud": "tsx scripts/seed-cloud.ts",
     "export-data": "tsx scripts/export-data.ts",
     "firebase:deploy-rules": "node scripts/deploy-rules.mjs",
     "format": "prettier --write . --ignore-unknown"

@@ -1,0 +1,14 @@
+.git
+node_modules
+.next
+.env*
+.tools
+.emulator-data
+legacy
+exports
+artifacts
+coverage
+test-results
+playwright-report
+*-debug.log*
+tsconfig.tsbuildinfo

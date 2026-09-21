@@ -1,1 +1,1 @@
-{ "projects": { "default": "demo-mitos" } }
+{ "projects": { "default": "demo-mitos", "cloud": "mitos-twelvedegrees" } }
