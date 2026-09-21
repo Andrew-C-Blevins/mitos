@@ -15,6 +15,10 @@ const config: NextConfig = {
     if (!localEmulators) return [];
     return [
       {
+        source: '/emulator/auth/:path*',
+        destination: 'http://127.0.0.1:9099/emulator/auth/:path*',
+      },
+      {
         source: '/identitytoolkit.googleapis.com/:path*',
         destination: 'http://127.0.0.1:9099/identitytoolkit.googleapis.com/:path*',
       },

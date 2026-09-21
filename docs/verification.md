@@ -57,3 +57,13 @@ sessions reported no console warnings or errors after 70 seconds idle, and a
 reverse-direction edit still synchronized immediately. The test title was
 restored. No imported record was edited. This is a bounded local check, not a
 long-running network soak test.
+
+The subsequent console report identified `/emulator/auth/iframe` as a 404:
+the exact iframe request returned 404 through port 3000 but 200 directly from
+the localhost Auth emulator on port 9099. The local-only rewrite now includes
+`/emulator/auth/:path*`, covering the SDK's iframe and auth handler. The browser
+icon was a separate missing asset, not the cause of this identified auth error.
+After rebuilding and restarting, the helper iframe returns 200 with the correct
+HTML through both localhost and the LAN preview address. The build, config lint
+and formatting checks pass; importing the config without emulator opt-in returns
+no emulator rewrites.
