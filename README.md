@@ -2,7 +2,7 @@
 
 A phone-first household action ledger, built from `planner-design-brief.md`
 revision 2. The first **Item + Everything design check** was reviewed; the
-approved cloud setup is in progress, with later feature milestones still deferred.
+approved cloud preview is deployed, with later feature milestones still deferred.
 The source planner has not been changed or retired.
 
 ## Run the local prototype
@@ -107,10 +107,20 @@ Vercel project **mitos** is locally linked in scope **andrew-c-blevins-projects*
 Preview environment configuration is installed and GitHub is connected. The
 approved Mitos-only runtime service account has Firestore read/write and Firebase
 Auth read access. Its key is a sensitive, server-only Vercel preview variable.
-The hosted preview and end-to-end Google sign-in are being verified. Production
-is not configured; vercel.json disables automatic main-branch deployments until
+The [hosted preview](https://mitos-hqwbm58pe-andrew-c-blevins-projects.vercel.app)
+is Ready. Its home page returns 200 and the session endpoint rejects an
+unauthenticated request with 401. Andrew's end-to-end Google sign-in and hosted
+Everything/Item check are pending. Vercel may ask for a Vercel account sign-in
+before the app's own Google sign-in. Production is not configured;
+vercel.json disables automatic main-branch deployments until
 production is approved. Other branches can deploy previews, and explicit CLI
 preview deployments remain available.
+
+Firebase Admin is pinned to the current compatible 13.x release because the
+14.x dependency chain fails when Vercel disables `require(ESM)`. CI tests this
+runtime condition. A scoped UUID override supplies its patched CommonJS build;
+the production dependency audit reports zero vulnerabilities. Registry evidence
+and exact versions are recorded in `CLAUDE.md` and `docs/registry-versions.json`.
 
 Keep `.env.local` on **demo-mitos**. `.firebaserc` defaults to that emulator project
 and has a separate `cloud` alias. Real emails and operator settings belong only in

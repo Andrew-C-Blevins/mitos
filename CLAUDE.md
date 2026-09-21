@@ -7,8 +7,10 @@ setup: the public GitHub repository and push, Firebase and Vercel projects,
 preview environment variables, rules/indexes deployment and household/data seed.
 This approval does not extend to later feature milestones, AI, custom DNS or
 retiring Flask/the tunnel. Andrew also approved the Mitos runtime service account
-and key, and granted Vercel GitHub app access. Complete the hosted preview sign-in check before
-claiming cloud setup is finished. The app/package/repo is mitos.
+and key, and granted Vercel GitHub app access. The hosted preview is deployed;
+Andrew's Google sign-in and hosted Everything/Item check are pending. Do not
+claim that end-to-end check passed until observed or confirmed by Andrew.
+The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
 4–6 define the architecture and data; section 8 defines screens; sections 10–11
@@ -23,6 +25,11 @@ Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
 Vercel is connected to GitHub. The preview runtime uses a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
+Verified preview: https://mitos-hqwbm58pe-andrew-c-blevins-projects.vercel.app
+(deployment dpl_FycJtEGc8WaggDQ473Yosj5QWfib, code commit 17fa845). Vercel reports
+Preview/Ready; HTTP home 200, unauthenticated POST /api/session 401. The exact
+hostname is authorized for Firebase Google sign-in. Deployment protection remains
+enabled. CI, cloud runtime credential reads and production dependency audit pass.
 .firebaserc defaults to demo-mitos; cloud is an explicit separate alias.
 .env.local remains local-only; .env.cloud.local holds ignored operator config.
 Cloud env is preview-scoped; production is not configured. vercel.json disables
