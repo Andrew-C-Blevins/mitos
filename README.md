@@ -109,8 +109,10 @@ approved Mitos-only runtime service account has Firestore read/write and Firebas
 Auth read access. Its key is a sensitive, server-only Vercel preview variable.
 The [hosted preview](https://mitos-hqwbm58pe-andrew-c-blevins-projects.vercel.app)
 is Ready. Its home page returns 200 and the session endpoint rejects an
-unauthenticated request with 401. Andrew's end-to-end Google sign-in and hosted
-Everything/Item check are pending. Vercel may ask for a Vercel account sign-in
+unauthenticated request with 401. On 2026-09-21 Andrew confirmed all 24 active
+items load and tapping them opens the correct item details. Google sign-in and
+household profile creation were also verified. This checkpoint has passed;
+later feature work remains paused. Vercel may ask for a Vercel account sign-in
 before the app's own Google sign-in. Production is not configured;
 vercel.json disables automatic main-branch deployments until
 production is approved. Other branches can deploy previews, and explicit CLI

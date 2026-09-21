@@ -7,9 +7,11 @@ setup: the public GitHub repository and push, Firebase and Vercel projects,
 preview environment variables, rules/indexes deployment and household/data seed.
 This approval does not extend to later feature milestones, AI, custom DNS or
 retiring Flask/the tunnel. Andrew also approved the Mitos runtime service account
-and key, and granted Vercel GitHub app access. The hosted preview is deployed;
-Andrew's Google sign-in and hosted Everything/Item check are pending. Do not
-claim that end-to-end check passed until observed or confirmed by Andrew.
+and key, and granted Vercel GitHub app access. The hosted preview is deployed.
+On 2026-09-21 Andrew confirmed all 24 active items are visible and tapping them
+opens the correct item details. Google provider sign-in and creation of Andrew's
+household profile were independently verified. The hosted checkpoint passed;
+keep later feature work paused until Andrew requests continuation.
 The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
