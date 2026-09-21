@@ -12,8 +12,9 @@ On 2026-09-21 Andrew confirmed all 24 active items are visible and tapping them
 opens the correct item details. Google provider sign-in and creation of Andrew's
 household profile were independently verified. The hosted checkpoint passed.
 Andrew then approved the desktop list/detail split and Settings (household people,
-personal default context and Export data). These are implemented and locally
-verified. M2 and later features remain paused. Andrew rejected the austere ledger
+personal default context and Export data). These are implemented, verified on
+desktop and phone, and deployed to the updated preview. M2 and later features
+remain paused. Andrew rejected the austere ledger
 aesthetic and requested three contrasting concepts before choosing a new look;
 the actual app still uses its existing palette. See docs/design-direction.md.
 The app/package/repo is mitos.
@@ -31,8 +32,8 @@ Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
 Vercel is connected to GitHub. The preview runtime uses a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
-Verified preview: https://mitos-hqwbm58pe-andrew-c-blevins-projects.vercel.app
-(deployment dpl_FycJtEGc8WaggDQ473Yosj5QWfib, code commit 17fa845). Vercel reports
+Verified preview: https://mitos-k7rdd9us8-andrew-c-blevins-projects.vercel.app
+(deployment dpl_2PJmTejWbLexFvpxuWgbumg2pMQS, app source matches 5655d0c). Vercel reports
 Preview/Ready; HTTP home 200, unauthenticated POST /api/session 401. The exact
 hostname is authorized for Firebase Google sign-in. Deployment protection remains
 enabled. CI, cloud runtime credential reads and production dependency audit pass.
@@ -179,6 +180,11 @@ keep Node ESM scripts and Next bundler behavior consistent.
 
 See README.md for setup, commands and export. No service worker or custom offline
 queue. Test tiers: B. Run npm run check plus npm run test:coverage and rules tests.
+Desktop and Settings validation: 28 domain/route tests and 14 emulator rules tests
+pass; date/rules coverage remains 100%. Browser checks cover 1440px desktop and
+390px phone, persisted default context and export download. Export privacy checks
+return no Andrew-private items for Karen; the cloud export reader returns all 39
+imported records with full histories. No cloud data is changed by these checks.
 Local preview data is a real local legacy snapshot: 39 personal tasks (24 active,
 15 done), no home tasks. Santa Rosa's 27 tasks and trip schedules are export-only.
 Private exports, logs, generated deployment env, emulator data and screenshots

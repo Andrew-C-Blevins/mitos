@@ -111,12 +111,13 @@ Vercel project **mitos** is locally linked in scope **andrew-c-blevins-projects*
 Preview environment configuration is installed and GitHub is connected. The
 approved Mitos-only runtime service account has Firestore read/write and Firebase
 Auth read access. Its key is a sensitive, server-only Vercel preview variable.
-The [hosted preview](https://mitos-hqwbm58pe-andrew-c-blevins-projects.vercel.app)
+The [hosted preview](https://mitos-k7rdd9us8-andrew-c-blevins-projects.vercel.app)
 is Ready. Its home page returns 200 and the session endpoint rejects an
 unauthenticated request with 401. On 2026-09-21 Andrew confirmed all 24 active
 items load and tapping them opens the correct item details. Google sign-in and
 household profile creation were also verified. This checkpoint has passed;
-the desktop split and Settings were subsequently approved and implemented.
+the desktop split and Settings were subsequently approved, implemented and
+deployed to the updated preview linked above.
 Later milestones and a replacement visual direction await review. Vercel may ask for a Vercel account sign-in
 before the app's own Google sign-in. Production is not configured;
 vercel.json disables automatic main-branch deployments until
