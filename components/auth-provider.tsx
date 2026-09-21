@@ -8,7 +8,7 @@ import {
   signOut,
   type User,
 } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import { getFirebase, firebaseConfigured, useEmulators } from '@/lib/data/client/firebase';
 import { decode } from '@/lib/data/codec';
 import type { UserProfile, Viewer } from '@/lib/types';
@@ -32,8 +32,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!firebaseConfigured) return;
     const { auth, db } = getFirebase();
     let generation = 0;
+    let stopProfile: (() => void) | undefined;
     const stop = onAuthStateChanged(auth, async (user) => {
       const current = ++generation;
+      stopProfile?.();
       setSession(null);
       if (!user) {
         setLoading(false);
@@ -56,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         if (!profileDoc.exists()) throw new Error('Your account is not ready yet.');
         const profile = decode<UserProfile>(user.uid, profileDoc.data());
-        if (current === generation)
+        if (current === generation) {
           setSession({
             user,
             profile,
@@ -66,6 +68,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               householdIds: profile.householdIds,
             },
           });
+          stopProfile = onSnapshot(
+            ref,
+            (snapshot) => {
+              if (current !== generation || !snapshot.exists()) return;
+              setSession((previous) =>
+                previous
+                  ? {
+                      ...previous,
+                      profile: decode<UserProfile>(user.uid, snapshot.data()),
+                    }
+                  : previous,
+              );
+            },
+            (caught) => {
+              if (current === generation) setError(caught.message);
+            },
+          );
+        }
       } catch (caught) {
         if (current === generation)
           setError(caught instanceof Error ? caught.message : 'Sign-in failed.');
@@ -75,6 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     return () => {
       generation++;
+      stopProfile?.();
       stop();
     };
   }, []);

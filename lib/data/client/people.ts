@@ -1,8 +1,11 @@
 'use client';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, updateDoc } from 'firebase/firestore';
 import { getFirebase } from './firebase';
 import { decode } from '../codec';
 import type { Person } from '@/lib/types';
+export function setPersonStatus(id: string, status: Person['status']) {
+  return updateDoc(doc(getFirebase().db, 'people', id), { status });
+}
 export function subscribePeople(
   householdId: string,
   next: (people: Person[]) => void,

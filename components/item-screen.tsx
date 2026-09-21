@@ -101,16 +101,16 @@ export function ItemScreen({ id }: { id: string }) {
   }
   if (!loaded)
     return (
-      <main className="document">
+      <article className="document">
         <p role="status">Opening item…</p>
-      </main>
+      </article>
     );
   if (!item)
     return (
-      <main className="document">
+      <article className="document">
         <Link href="/">Back to Everything</Link>
         <p role="alert">{error || 'This item is not available to your account.'}</p>
-      </main>
+      </article>
     );
   const activePeople = people.filter((person) => person.status === 'active');
   const today = localDate(
@@ -140,7 +140,7 @@ export function ItemScreen({ id }: { id: string }) {
     setRevealed('');
   };
   return (
-    <main className="document">
+    <article className="document">
       <Link href="/" className="back-link">
         <ArrowLeft size={16} /> Everything
       </Link>
@@ -623,7 +623,7 @@ export function ItemScreen({ id }: { id: string }) {
           </button>
         </div>
       </details>
-    </main>
+    </article>
   );
 }
 function AddLink({ item }: { item: Item }) {

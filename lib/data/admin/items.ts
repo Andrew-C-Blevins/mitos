@@ -17,14 +17,21 @@ export async function getItem(id: string, viewer: Viewer): Promise<Item> {
 export async function listItems(viewer: Viewer): Promise<Item[]> {
   const { db } = getAdmin();
   const snapshots = await Promise.all([
-    ...viewer.householdIds.map((id) =>
-      db.collection('items').where('householdId', '==', id).where('scope', '==', 'household').get(),
-    ),
-    db
-      .collection('items')
-      .where('ownerPersonIds', 'array-contains', viewer.personId)
-      .where('scope', '==', 'private')
-      .get(),
+    ...viewer.householdIds.flatMap((id) => [
+      db
+        .collection('items')
+        .where('householdId', '==', id)
+        .where('scope', '==', 'household')
+        .orderBy('sortKey')
+        .get(),
+      db
+        .collection('items')
+        .where('householdId', '==', id)
+        .where('ownerPersonIds', 'array-contains', viewer.personId)
+        .where('scope', '==', 'private')
+        .orderBy('sortKey')
+        .get(),
+    ]),
   ]);
   return [
     ...new Map(

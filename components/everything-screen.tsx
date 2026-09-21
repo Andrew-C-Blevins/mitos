@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import {
   Check,
@@ -173,7 +174,7 @@ export function EverythingScreen() {
     });
   }
   return (
-    <main className="everything">
+    <section className="everything" aria-label="Everything">
       <div className="list-heading">
         <h1>Everything</h1>
         <span className="mono count">{filtered.length}</span>
@@ -343,7 +344,7 @@ export function EverythingScreen() {
           }}
         />
       ) : null}
-    </main>
+    </section>
   );
 }
 
@@ -366,6 +367,7 @@ interface RowProps {
 }
 function ItemRow(props: RowProps) {
   const { item, people, me, today } = props;
+  const selected = usePathname() === `/items/${item.id}`;
   const [offset, setOffset] = useState(0),
     [dragActive, setDragActive] = useState(false);
   const gesture = useRef<{
@@ -397,6 +399,7 @@ function ItemRow(props: RowProps) {
     <div
       className={`row-container ${props.nested ? 'nested' : ''} ${dragActive ? 'drag-active' : ''}`}
       data-item-id={item.id}
+      data-selected={selected || undefined}
       onDragOver={(event) => {
         if (props.draggable) event.preventDefault();
       }}
@@ -476,7 +479,11 @@ function ItemRow(props: RowProps) {
             <span className="completion-circle" />
           </button>
         )}
-        <Link href={`/items/${item.id}`} className="row-copy">
+        <Link
+          href={`/items/${item.id}`}
+          className="row-copy"
+          aria-current={selected ? 'page' : undefined}
+        >
           <span className="row-title">{item.title}</span>
           {secondary || mark ? (
             <span className="row-secondary">

@@ -93,7 +93,11 @@ npm run export-data -- --uid=local-andrew
 This writes versioned JSON to ignored `exports/`, including all authorized items,
 their complete logs and targeted proposals, household and people records, and the
 requesting user's profile. Credentials and other owners' private items are excluded.
-Settings → Export is deferred with Settings until the design checkpoint is approved.
+Settings → Export data now downloads the same versioned JSON for the signed-in
+user. Settings also lets household members archive/restore people and save their
+own default context. The context will become Ready's starting filter in M2.
+At 1200px and above, Everything and the selected item appear side by side with
+a left navigation rail. Phones retain the separate list and item pages.
 
 ## Approved cloud setup
 
@@ -112,7 +116,8 @@ is Ready. Its home page returns 200 and the session endpoint rejects an
 unauthenticated request with 401. On 2026-09-21 Andrew confirmed all 24 active
 items load and tapping them opens the correct item details. Google sign-in and
 household profile creation were also verified. This checkpoint has passed;
-later feature work remains paused. Vercel may ask for a Vercel account sign-in
+the desktop split and Settings were subsequently approved and implemented.
+Later milestones and a replacement visual direction await review. Vercel may ask for a Vercel account sign-in
 before the app's own Google sign-in. Production is not configured;
 vercel.json disables automatic main-branch deployments until
 production is approved. Other branches can deploy previews, and explicit CLI

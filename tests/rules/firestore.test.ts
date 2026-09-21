@@ -21,6 +21,7 @@ import {
   increment,
   arrayRemove,
   arrayUnion,
+  deleteField,
   runTransaction,
 } from 'firebase/firestore';
 
@@ -141,6 +142,18 @@ beforeEach(async () => {
   });
 });
 describe('membership, privacy and account boundaries', () => {
+  it('allows only personal context changes and household person status changes in Settings', async () => {
+    const profile = doc(andrew(), 'users/andrew-uid');
+    await assertSucceeds(updateDoc(profile, { defaultContext: 'yard' }));
+    await assertSucceeds(updateDoc(profile, { defaultContext: deleteField() }));
+    await assertFails(updateDoc(profile, { defaultContext: 'office' }));
+    await assertFails(updateDoc(doc(karen(), 'users/andrew-uid'), { defaultContext: 'home' }));
+    const person = doc(andrew(), 'people/diana');
+    await assertSucceeds(updateDoc(person, { status: 'active' }));
+    await assertSucceeds(updateDoc(person, { status: 'archived' }));
+    await assertFails(updateDoc(person, { uid: 'andrew-uid' }));
+    await assertFails(updateDoc(person, { status: 'deleted' }));
+  });
   it('denies unauthenticated, non-allowlisted and unverified readers', async () => {
     await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'items/shared')));
     for (const token of [

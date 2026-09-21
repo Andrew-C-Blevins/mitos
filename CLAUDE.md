@@ -10,8 +10,12 @@ retiring Flask/the tunnel. Andrew also approved the Mitos runtime service accoun
 and key, and granted Vercel GitHub app access. The hosted preview is deployed.
 On 2026-09-21 Andrew confirmed all 24 active items are visible and tapping them
 opens the correct item details. Google provider sign-in and creation of Andrew's
-household profile were independently verified. The hosted checkpoint passed;
-keep later feature work paused until Andrew requests continuation.
+household profile were independently verified. The hosted checkpoint passed.
+Andrew then approved the desktop list/detail split and Settings (household people,
+personal default context and Export data). These are implemented and locally
+verified. M2 and later features remain paused. Andrew rejected the austere ledger
+aesthetic and requested three contrasting concepts before choosing a new look;
+the actual app still uses its existing palette. See docs/design-direction.md.
 The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
@@ -86,7 +90,11 @@ Registry evidence and initial latest metadata: docs/registry-versions.json.
 
 ## File map
 
-- app/: root App Router pages, manifest, Apple icon, thin /api/session route.
+- app/: root App Router pages, Settings, manifest, Apple icon, thin session/export routes.
+- components/planner-workspace.tsx: persistent list and selected item at desktop
+  widths of 1200px and above; phone retains separate list/item views.
+- components/settings-screen.tsx: archive/restore people, save default context,
+  download authenticated versioned JSON. Token/Shortcut setup stays deferred.
 - components/item-screen.tsx: living document, inline adds and log pagination.
 - components/everything-screen.tsx: master ledger, filters, gestures and Inbox.
 - components/auth-provider.tsx: Google popup in production, explicit local login
@@ -98,6 +106,8 @@ Registry evidence and initial latest metadata: docs/registry-versions.json.
 - lib/data/client/: Firebase browser reads and human writes; persistent cache on
   secure origins; per-field updates and array transforms, no whole-item replacement.
 - lib/data/admin/items.ts: authorized getItem/listItems and applyProposal only.
+- lib/data/admin/export.ts: authorized items with full histories, own profile,
+  household and people; no credentials or another person's private items.
 - lib/data/admin/proposals.ts: future AI/agent proposal-only writes.
 - lib/data/codec.ts: Firestore timestamps to ISO instants at the domain boundary;
   calendar dates stay YYYY-MM-DD in the viewer's local timezone.

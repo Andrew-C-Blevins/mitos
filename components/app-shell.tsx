@@ -1,13 +1,17 @@
 'use client';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Plus, List, ArrowUpRight, CalendarDays, CheckCheck, LogOut } from 'lucide-react';
+import { Plus, List, ArrowUpRight, CalendarDays, CheckCheck, LogOut, Settings } from 'lucide-react';
 import { logout, useSession } from './auth-provider';
 import { CaptureSheet } from './capture-sheet';
+import { PlannerWorkspace } from './planner-workspace';
 export function AppShell({ children }: { children: ReactNode }) {
   const [captureOpen, setCaptureOpen] = useState(false),
     [message, setMessage] = useState('');
   const { profile } = useSession();
+  const pathname = usePathname();
+  const plannerOpen = pathname === '/' || pathname.startsWith('/items/');
   useEffect(() => {
     const listener = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
@@ -33,6 +37,13 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Link>
         <div className="account">
           <span>{profile.name.split(' ')[0]}</span>
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            aria-current={pathname === '/settings' ? 'page' : undefined}
+          >
+            <Settings size={17} />
+          </Link>
           <button
             onClick={() => logout().catch((error) => setMessage(error.message))}
             aria-label="Sign out"
@@ -49,7 +60,9 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
         </div>
       ) : null}
-      {children}
+      <main className="app-content">
+        {plannerOpen ? <PlannerWorkspace>{children}</PlannerWorkspace> : children}
+      </main>
       <button
         className="capture-fab"
         onClick={() => setCaptureOpen(true)}
@@ -58,7 +71,11 @@ export function AppShell({ children }: { children: ReactNode }) {
         <Plus size={22} strokeWidth={1.8} />
       </button>
       <nav className="bottom-nav" aria-label="Main navigation">
-        <Link href="/" className="selected">
+        <Link
+          href="/"
+          className={plannerOpen ? 'selected' : ''}
+          aria-current={plannerOpen ? 'page' : undefined}
+        >
           <List size={16} />
           <span>Everything</span>
         </Link>
@@ -74,6 +91,14 @@ export function AppShell({ children }: { children: ReactNode }) {
           <CheckCheck size={16} />
           <span>Review</span>
         </button>
+        <Link
+          href="/settings"
+          className={`desktop-settings ${pathname === '/settings' ? 'selected' : ''}`}
+          aria-current={pathname === '/settings' ? 'page' : undefined}
+        >
+          <Settings size={16} />
+          <span>Settings</span>
+        </Link>
       </nav>
       <CaptureSheet
         open={captureOpen}
