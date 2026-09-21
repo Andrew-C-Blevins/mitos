@@ -1,0 +1,56 @@
+{
+  "name": "mitos",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24 <25"
+  },
+  "scripts": {
+    "dev": "next dev --hostname 0.0.0.0",
+    "build": "next build",
+    "start": "next start --hostname 0.0.0.0",
+    "lint": "eslint .",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:rules": "firebase emulators:exec --project demo-mitos --only firestore \"vitest run --config vitest.rules.config.ts\"",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "check": "npm run check:boundaries && npm run lint && npm run typecheck && npm test && npm run build",
+    "emulators": "node scripts/emulators.mjs",
+    "seed:local": "tsx scripts/seed-local.ts",
+    "export-data": "tsx scripts/export-data.ts",
+    "firebase:deploy-rules": "node scripts/deploy-rules.mjs",
+    "format": "prettier --write . --ignore-unknown"
+  },
+  "dependencies": {
+    "@js-temporal/polyfill": "0.5.1",
+    "firebase": "12.19.0",
+    "firebase-admin": "14.4.0",
+    "fractional-indexing": "4.0.0",
+    "lucide-react": "1.47.0",
+    "next": "16.3.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "rrule": "2.8.1",
+    "server-only": "0.0.1",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "@playwright/test": "1.63.0",
+    "@tailwindcss/postcss": "4.3.3",
+    "@types/node": "24.13.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitest/coverage-v8": "5.0.1",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "firebase-tools": "15.30.2",
+    "prettier": "3.9.8",
+    "tailwindcss": "4.3.3",
+    "tsx": "4.23.15",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  }
+}

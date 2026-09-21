@@ -1,0 +1,170 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Emulator identities only. Production rendering must use ALLOWED_EMAILS.
+    function allowed() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && request.auth.token.email in ['andrew@mitos.test', 'karen@mitos.test'];
+    }
+    function member(householdId) {
+      return allowed() && request.auth.uid in get(/databases/$(database)/documents/households/$(householdId)).data.memberUids;
+    }
+    function personId() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.personId; }
+    function access(item) {
+      return member(item.householdId) && (item.scope == 'household' || personId() in item.ownerPersonIds);
+    }
+    function optionalText(data, key, max) { return !(key in data) || (data[key] is string && data[key].size() <= max); }
+    function optionalDate(data, key) { return !(key in data) || (data[key] is string && data[key].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')); }
+    function optionalTimestamp(data, key) { return !(key in data) || data[key] is timestamp; }
+    function validNeed(n) { return n.keys().hasOnly(['id', 'text', 'kind', 'satisfied', 'waitingOn']) && n.id is string && n.text is string && n.text.size() > 0 && n.text.size() <= 4000 && n.kind in ['material', 'person', 'info', 'decision'] && n.satisfied is bool && optionalText(n, 'waitingOn', 4000); }
+    function validQuestion(q) { return q.keys().hasOnly(['id', 'text', 'createdAt']) && q.id is string && q.text is string && q.text.size() > 0 && q.text.size() <= 4000 && q.createdAt is timestamp; }
+    function validDecision(d) { return d.keys().hasOnly(['id', 'text', 'rationale', 'decidedAt', 'fromQuestionId']) && d.id is string && d.text is string && d.text.size() > 0 && d.text.size() <= 4000 && d.decidedAt is timestamp && optionalText(d, 'rationale', 4000) && optionalText(d, 'fromQuestionId', 128); }
+    function validStep(s) { return s.keys().hasOnly(['id', 'text', 'done']) && s.id is string && s.text is string && s.text.size() > 0 && s.text.size() <= 4000 && s.done is bool; }
+    function validLink(l) { return l.keys().hasOnly(['id', 'url', 'label', 'kind']) && l.id is string && l.label is string && l.label.size() > 0 && l.label.size() <= 4000 && l.url is string && l.url.matches('https?://.*') && l.kind in ['chat', 'reference', 'hearth']; }
+    // Human inline adds/edits change one entry per section. Validate only the new
+    // value, not every old entry, keeping large items within the rules budget.
+    function validNestedChange(before, after, kind) {
+      let added = after.removeAll(before);
+      return added.size() <= 1 && (added.size() == 0
+        || (kind == 'needs' && validNeed(added[0]))
+        || (kind == 'questions' && validQuestion(added[0]))
+        || (kind == 'decisions' && validDecision(added[0]))
+        || (kind == 'steps' && validStep(added[0]))
+        || (kind == 'links' && validLink(added[0])));
+    }
+    function validNestedChanges(before, after) {
+      return (before.needs == after.needs || validNestedChange(before.needs, after.needs, 'needs'))
+        && (before.questions == after.questions || validNestedChange(before.questions, after.questions, 'questions'))
+        && (before.decisions == after.decisions || validNestedChange(before.decisions, after.decisions, 'decisions'))
+        && (before.steps == after.steps || validNestedChange(before.steps, after.steps, 'steps'))
+        && (before.links == after.links || validNestedChange(before.links, after.links, 'links'));
+    }
+    function validItem(d) {
+      return d.keys().hasAll(['title', 'status', 'scope', 'householdId', 'ownerPersonIds', 'createdBy', 'category', 'effort', 'focus', 'contexts', 'businessHours', 'needs', 'questions', 'decisions', 'steps', 'links', 'sortKey', 'version', 'createdAt', 'updatedAt'])
+        && d.keys().hasOnly(['title', 'intent', 'status', 'scope', 'householdId', 'ownerPersonIds', 'createdBy', 'category', 'outcome', 'nextAction', 'effort', 'focus', 'contexts', 'businessHours', 'dueDate', 'targetDate', 'snoozeUntil', 'availableFrom', 'needs', 'questions', 'decisions', 'steps', 'links', 'recurrence', 'parentId', 'sortKey', 'version', 'historicalOwnerNames', 'createdAt', 'updatedAt', 'completedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 500
+        && d.status in ['inbox', 'active', 'done', 'cancelled'] && d.scope in ['private', 'household']
+        && d.householdId is string && d.createdBy is string
+        && d.ownerPersonIds is list && d.ownerPersonIds.size() <= 10
+        && (d.scope != 'private' || d.ownerPersonIds.size() > 0)
+        && d.category in ['home', 'family', 'finance-admin', 'personal', 'work']
+        && d.effort in ['quick', 'sitting', 'multi'] && d.focus in ['low', 'normal', 'high']
+        && d.contexts is list && d.contexts.size() <= 5 && d.contexts.hasOnly(['computer', 'phone', 'home', 'yard', 'errand'])
+        && d.businessHours is bool
+        && d.needs is list && d.needs.size() <= 40 && d.questions is list && d.questions.size() <= 40
+        && d.decisions is list && d.decisions.size() <= 40 && d.steps is list && d.steps.size() <= 40 && d.links is list && d.links.size() <= 40
+        && d.sortKey is string && d.sortKey.size() > 0 && d.sortKey.size() <= 100
+        && d.version is int && d.version > 0 && d.createdAt is timestamp && d.updatedAt is timestamp
+        && optionalText(d, 'intent', 4000) && optionalText(d, 'outcome', 4000) && optionalText(d, 'nextAction', 4000)
+        && optionalDate(d, 'dueDate') && optionalDate(d, 'targetDate') && optionalDate(d, 'snoozeUntil') && optionalDate(d, 'availableFrom')
+        && optionalTimestamp(d, 'completedAt')
+        && (!('recurrence' in d) || (d.recurrence is map && d.recurrence.keys().hasOnly(['kind', 'rule', 'intervalDays', 'season', 'lastCompletedAt'])
+          && ((d.recurrence.kind == 'calendar' && d.recurrence.rule is string && d.recurrence.rule.size() <= 500)
+            || (d.recurrence.kind == 'afterCompletion' && d.recurrence.intervalDays is int && d.recurrence.intervalDays >= 1 && d.recurrence.intervalDays <= 3650))
+          && optionalTimestamp(d.recurrence, 'lastCompletedAt')
+          && (!('season' in d.recurrence) || (d.recurrence.season.keys().hasOnly(['start', 'end']) && d.recurrence.season.start is string && d.recurrence.season.end is string))))
+        && (!('historicalOwnerNames' in d) || d.historicalOwnerNames is list);
+    }
+    function validParent(d, itemId) {
+      return !('parentId' in d) || (d.parentId != itemId
+        && !('parentId' in getAfter(/databases/$(database)/documents/items/$(d.parentId)).data)
+        && getAfter(/databases/$(database)/documents/items/$(d.parentId)).data.householdId == d.householdId
+        && getAfter(/databases/$(database)/documents/items/$(d.parentId)).data.scope == d.scope
+        && getAfter(/databases/$(database)/documents/items/$(d.parentId)).data.ownerPersonIds == d.ownerPersonIds);
+    }
+    match /households/{householdId} { allow read: if member(householdId); allow write: if false; }
+    match /people/{id} {
+      allow read: if member(resource.data.householdId);
+      allow update: if member(resource.data.householdId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status in ['active', 'archived'];
+      allow create, delete: if false;
+    }
+    match /users/{uid} {
+      allow read: if allowed() && request.auth.uid == uid;
+      allow update: if allowed() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['email', 'name', 'defaultContext'])
+        && request.resource.data.email == request.auth.token.email && request.resource.data.name is string
+        && (!('defaultContext' in request.resource.data) || request.resource.data.defaultContext in ['computer', 'phone', 'home', 'yard', 'errand']);
+      allow create, delete: if false;
+    }
+    match /items/{id} {
+      allow read: if access(resource.data);
+      allow create: if access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
+        && request.resource.data.needs.size() == 0 && request.resource.data.questions.size() == 0 && request.resource.data.decisions.size() == 0 && request.resource.data.steps.size() == 0 && request.resource.data.links.size() == 0
+        && request.resource.data.createdBy == request.auth.uid && request.resource.data.version == 1
+        && getAfter(/databases/$(database)/documents/items/$(id)/log/capture).data.by == request.auth.uid
+        && getAfter(/databases/$(database)/documents/items/$(id)/log/capture).data.kind == 'capture';
+      allow update: if access(resource.data) && access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
+        && validNestedChanges(resource.data, request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.householdId == resource.data.householdId && request.resource.data.version == resource.data.version + 1;
+      // Cancellation preserves the permanent capture and the rest of the log.
+      allow delete: if false;
+      match /log/{entryId} {
+        allow read: if access(get(/databases/$(database)/documents/items/$(id)).data);
+        allow create: if access(getAfter(/databases/$(database)/documents/items/$(id)).data)
+          && request.resource.data.keys().hasOnly(['at', 'by', 'kind', 'text'])
+          && request.resource.data.by == request.auth.uid && request.resource.data.at is timestamp
+          && request.resource.data.kind in ['capture', 'note', 'status', 'migrated']
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 4000
+          && (request.resource.data.kind != 'capture' || (entryId == 'capture' && !exists(/databases/$(database)/documents/items/$(id))));
+        allow update, delete: if false;
+      }
+    }
+    function checkedOnly(before, after) {
+      return before is list && after is list && before.size() == after.size() && before.size() <= 40
+        && (before.size() <= 0 || (after[0].checked is bool && after[0].diff(before[0]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 1 || (after[1].checked is bool && after[1].diff(before[1]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 2 || (after[2].checked is bool && after[2].diff(before[2]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 3 || (after[3].checked is bool && after[3].diff(before[3]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 4 || (after[4].checked is bool && after[4].diff(before[4]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 5 || (after[5].checked is bool && after[5].diff(before[5]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 6 || (after[6].checked is bool && after[6].diff(before[6]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 7 || (after[7].checked is bool && after[7].diff(before[7]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 8 || (after[8].checked is bool && after[8].diff(before[8]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 9 || (after[9].checked is bool && after[9].diff(before[9]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 10 || (after[10].checked is bool && after[10].diff(before[10]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 11 || (after[11].checked is bool && after[11].diff(before[11]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 12 || (after[12].checked is bool && after[12].diff(before[12]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 13 || (after[13].checked is bool && after[13].diff(before[13]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 14 || (after[14].checked is bool && after[14].diff(before[14]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 15 || (after[15].checked is bool && after[15].diff(before[15]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 16 || (after[16].checked is bool && after[16].diff(before[16]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 17 || (after[17].checked is bool && after[17].diff(before[17]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 18 || (after[18].checked is bool && after[18].diff(before[18]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 19 || (after[19].checked is bool && after[19].diff(before[19]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 20 || (after[20].checked is bool && after[20].diff(before[20]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 21 || (after[21].checked is bool && after[21].diff(before[21]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 22 || (after[22].checked is bool && after[22].diff(before[22]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 23 || (after[23].checked is bool && after[23].diff(before[23]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 24 || (after[24].checked is bool && after[24].diff(before[24]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 25 || (after[25].checked is bool && after[25].diff(before[25]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 26 || (after[26].checked is bool && after[26].diff(before[26]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 27 || (after[27].checked is bool && after[27].diff(before[27]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 28 || (after[28].checked is bool && after[28].diff(before[28]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 29 || (after[29].checked is bool && after[29].diff(before[29]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 30 || (after[30].checked is bool && after[30].diff(before[30]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 31 || (after[31].checked is bool && after[31].diff(before[31]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 32 || (after[32].checked is bool && after[32].diff(before[32]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 33 || (after[33].checked is bool && after[33].diff(before[33]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 34 || (after[34].checked is bool && after[34].diff(before[34]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 35 || (after[35].checked is bool && after[35].diff(before[35]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 36 || (after[36].checked is bool && after[36].diff(before[36]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 37 || (after[37].checked is bool && after[37].diff(before[37]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 38 || (after[38].checked is bool && after[38].diff(before[38]).affectedKeys().hasOnly(['checked'])))
+        && (before.size() <= 39 || (after[39].checked is bool && after[39].diff(before[39]).affectedKeys().hasOnly(['checked'])));
+    }
+    match /proposals/{id} {
+      // New-item proposals have no target ACL in the brief. Fail closed until M3
+      // explicitly defines the creator/household envelope for them.
+      allow read: if resource.data.targetItemId is string && access(get(/databases/$(database)/documents/items/$(resource.data.targetItemId)).data);
+      allow update: if resource.data.targetItemId is string && access(get(/databases/$(database)/documents/items/$(resource.data.targetItemId)).data)
+        && resource.data.status == 'pending'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'changes'])
+        && request.resource.data.status in ['pending', 'discarded']
+        && checkedOnly(resource.data.changes, request.resource.data.changes);
+      allow create, delete: if false;
+    }
+    match /credentials/{uid} { allow read, write: if false; }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

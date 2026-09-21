@@ -1,0 +1,11 @@
+node_modules
+.next
+.tools
+.emulator-data
+coverage
+exports
+artifacts
+legacy/legacy-export.json
+legacy/MANIFEST.md
+package-lock.json
+next-env.d.ts
