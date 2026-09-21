@@ -39,13 +39,18 @@ bind to 127.0.0.1; Next proxies browser requests for same-Wi-Fi phone checks.
 Read directly from the npm registry on 2026-09-21; exact
 pins and the lockfile are authoritative. Newest-compatible, not blindly newest:
 ESLint 9 and TypeScript 6 satisfy Next's transitive lint-plugin peer constraints.
+Firebase Admin 13.10.0 is the newest compatible 13.x release, rechecked in npm
+on 2026-09-21. Admin 14.4.0 crashes on Vercel through jwks-rsa 4 requiring jose 6
+when require(ESM) is disabled. CI reproduces that runtime setting explicitly.
+Within Firebase Admin only, uuid is pinned to registry-verified **11.1.1** to
+include the buffer-bounds security fix while retaining CommonJS support.
 Registry evidence and initial latest metadata: docs/registry-versions.json.
 
 | Package                      | Resolved version |
 | ---------------------------- | ---------------- |
 | @js-temporal/polyfill        | 0.5.1            |
 | firebase                     | 12.19.0          |
-| firebase-admin               | 14.4.0           |
+| firebase-admin               | 13.10.0          |
 | fractional-indexing          | 4.0.0            |
 | lucide-react                 | 1.47.0           |
 | next                         | 16.3.5           |

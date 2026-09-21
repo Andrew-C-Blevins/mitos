@@ -190,7 +190,7 @@
   "selectedVersions": {
     "@js-temporal/polyfill": "0.5.1",
     "firebase": "12.19.0",
-    "firebase-admin": "14.4.0",
+    "firebase-admin": "13.10.0",
     "fractional-indexing": "4.0.0",
     "lucide-react": "1.47.0",
     "next": "16.3.5",
@@ -219,6 +219,38 @@
     "ESLint 9.39.5 is the newest npm-registry ESLint 9; Next lint plugins reject ESLint 10.",
     "TypeScript 6.0.3 is the newest stable registry version below typescript-eslint’s <6.1 constraint.",
     "@types/node 24.13.6 matches the Node 24 runtime instead of using Node 26 types.",
+    "Firebase Admin 13.10.0 is the newest npm-registry 13.x release. Admin 14.4.0 fails on Vercel because jwks-rsa 4 requires ESM-only jose 6 while require(ESM) is disabled. CI checks this runtime constraint.",
+    "Firebase Admin transitive uuid is overridden to registry-verified 11.1.1, the patched dual CJS/ESM release; its consumers use the compatible v4 API. This avoids GHSA-w5hq-g745-h8pq without an ESM-only override.",
     "npm install resolved the exact package-lock.json; npm ls confirms installed versions."
-  ]
+  ],
+  "runtimeCompatibilityChecks": [
+    {
+      "checkedAt": "2026-09-21T22:08:26.547Z",
+      "registry": "https://registry.npmjs.org",
+      "package": "firebase-admin",
+      "selected": {
+        "version": "13.10.0",
+        "engines": {
+          "node": ">=18"
+        },
+        "dependencies": {
+          "jwks-rsa": "^3.1.0",
+          "jsonwebtoken": "^9.0.0",
+          "@fastify/busboy": "^3.0.0",
+          "farmhash-modern": "^1.1.0",
+          "fast-deep-equal": "^3.1.1",
+          "google-auth-library": "^10.6.1",
+          "@firebase/database-types": "^1.0.6",
+          "@firebase/database-compat": "^2.0.0"
+        }
+      },
+      "rejectedVersion": "14.4.0",
+      "reason": "Reproduced ERR_REQUIRE_ESM with --no-experimental-require-module; Vercel runtime logs confirm the same jwks-rsa 4 / jose 6 failure."
+    }
+  ],
+  "overrides": {
+    "firebase-admin": {
+      "uuid": "11.1.1"
+    }
+  }
 }
