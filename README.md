@@ -104,9 +104,13 @@ archived without one. Google verifies each account at sign-in. The `users` profi
 is created on first sign-in. Existing data is preserved when the seed is rerun.
 
 Vercel project **mitos** is locally linked in scope **andrew-c-blevins-projects**.
-Preview environment configuration is installed; the runtime service-account/key
-approval and Vercel GitHub app access are still pending. No hosted preview or
-end-to-end Google sign-in has been verified yet. Production is not configured.
+Preview environment configuration is installed and GitHub is connected. The
+approved Mitos-only runtime service account has Firestore read/write and Firebase
+Auth read access. Its key is a sensitive, server-only Vercel preview variable.
+The hosted preview and end-to-end Google sign-in are being verified. Production
+is not configured; vercel.json disables automatic main-branch deployments until
+production is approved. Other branches can deploy previews, and explicit CLI
+preview deployments remain available.
 
 Keep `.env.local` on **demo-mitos**. `.firebaserc` defaults to that emulator project
 and has a separate `cloud` alias. Real emails and operator settings belong only in

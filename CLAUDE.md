@@ -6,8 +6,8 @@ The first M1 Item + Everything prototype was reviewed. Andrew approved cloud
 setup: the public GitHub repository and push, Firebase and Vercel projects,
 preview environment variables, rules/indexes deployment and household/data seed.
 This approval does not extend to later feature milestones, AI, custom DNS or
-retiring Flask/the tunnel. Runtime service-account/key approval and Vercel GitHub
-app access are still pending. Complete the hosted preview sign-in check before
+retiring Flask/the tunnel. Andrew also approved the Mitos runtime service account
+and key, and granted Vercel GitHub app access. Complete the hosted preview sign-in check before
 claiming cloud setup is finished. The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
@@ -20,10 +20,15 @@ No model calls, AI SDK, agent endpoint or MCP server is enabled.
 Hosting: Vercel Hobby project mitos in andrew-c-blevins-projects; GitHub repository
 Andrew-C-Blevins/mitos. Firebase project mitos-twelvedegrees has Google sign-in,
 Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
-The Vercel preview runtime credential and Git integration are pending.
+Vercel is connected to GitHub. The preview runtime uses a Mitos-only service
+account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
+is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
 .firebaserc defaults to demo-mitos; cloud is an explicit separate alias.
 .env.local remains local-only; .env.cloud.local holds ignored operator config.
-Cloud env is preview-scoped; production is not configured. The hostname needs review;
+Cloud env is preview-scoped; production is not configured. vercel.json disables
+automatic deployments from main until production is approved; other branches
+can produce previews. Explicit CLI preview deployments remain available.
+The hostname needs review;
 do not replace planner.twelvedegrees.studio while the old service still exists.
 Node 24 is the tested runtime (local 24.14.0); npm 11.11.0; portable Java 21 is used
 for the local Firestore emulator. No system-wide Java install. Emulator services
@@ -154,5 +159,5 @@ Local preview data is a real local legacy snapshot: 39 personal tasks (24 active
 15 done), no home tasks. Santa Rosa's 27 tasks and trip schedules are export-only.
 Private exports, logs, generated deployment env, emulator data and screenshots
 are ignored. A fresh Pi export and human manifest review are still required before
-retirement. GitHub CI passed on the initial published checkpoint. Rules deploy
+retirement. GitHub CI passed on the published cloud setup checkpoint. Rules deploy
 remains an explicit operator action; CI does not deploy rules or seed live data.
