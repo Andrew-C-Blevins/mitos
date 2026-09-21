@@ -8,6 +8,7 @@ const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
 export const metadata: Metadata = {
   title: 'Mitos',
   description: 'A shared household action system.',
+  icons: { icon: '/apple-icon' },
   appleWebApp: { capable: true, title: 'Mitos', statusBarStyle: 'default' },
 };
 export const viewport: Viewport = {

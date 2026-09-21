@@ -35,3 +35,25 @@ local login loads an empty list and cannot read Andrew's private imported items.
 No cloud resource, cloud environment variable, rule deployment, GitHub push,
 DNS record, tunnel or Flask service was changed. The design checkpoint remains
 closed until Andrew reviews the prototype and approves further work.
+
+## Local preview connection follow-up
+
+Desktop review reported interrupted Firestore Listen responses and an unnamed 404. The Next rewrite proxy defaulted to a 30-second timeout, matching the
+emulator's idle response interval. Direct HTTP probes observed the emulator
+finishing idle responses at 30 seconds even when requesting a 25-second poll.
+The local demo proxy now allows 60 seconds. Forced long polling was removed;
+the browser uses the SDK's standard streaming transport and automatic fallback.
+The proxy setting is gated to emulator mode; Java remains localhost-only.
+
+The app had no browser icon declaration, and `/favicon.ico` returned 404. Its
+metadata now explicitly uses the existing `/apple-icon` image, which returns 200.
+The original unnamed 404 cannot be identified conclusively from the report.
+
+The updated production build, lint and typecheck pass. A saved title edit on the
+existing completed smoke-test item appeared in a separate LAN-origin browser
+session without a reload, confirming a server round trip rather than a shared
+local browser cache. With the final streaming configuration, both fresh browser
+sessions reported no console warnings or errors after 70 seconds idle, and a
+reverse-direction edit still synchronized immediately. The test title was
+restored. No imported record was edited. This is a bounded local check, not a
+long-running network soak test.

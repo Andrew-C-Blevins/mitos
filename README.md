@@ -35,7 +35,10 @@ Use `npm run build` followed by `npm start` for phone review; Next's development
 server restricts requests from additional origins by default.
 The Auth and Firestore emulators listen only on localhost; Next proxies their
 client requests. Java does not need an inbound firewall exception. No tunnel or
-cloud deployment is involved. LAN HTTP uses in-memory Firestore caching because
+cloud deployment is involved. The local proxy allows 60 seconds of inactivity,
+leaving room for the emulator's 30-second idle responses. The client uses the
+Firebase SDK's standard streaming transport and automatic long-polling fallback.
+LAN HTTP uses in-memory Firestore caching because
 it is not a secure browser context; durable offline persistence is enabled on
 localhost and the future HTTPS deployment. No service worker is installed.
 

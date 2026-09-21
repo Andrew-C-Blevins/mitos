@@ -39,7 +39,6 @@ let firestore: ReturnType<typeof initializeFirestore> | undefined;
 function initializeDb(app: ReturnType<typeof initializeApp>) {
   if (!firestore)
     firestore = initializeFirestore(app, {
-      experimentalForceLongPolling: useEmulators,
       localCache:
         typeof window !== 'undefined' && window.isSecureContext
           ? persistentLocalCache({ tabManager: persistentMultipleTabManager() })

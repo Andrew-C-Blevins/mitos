@@ -1,16 +1,18 @@
 import type { NextConfig } from 'next';
+const localEmulators =
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === 'true' &&
+  process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID === 'demo-mitos';
 const config: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
   devIndicators: false,
+  // The emulator can hold idle Listen requests for 30 seconds even when the
+  // client asks for shorter polls. Leave time for the response to finish.
+  experimental: localEmulators ? { proxyTimeout: 60_000 } : {},
   async rewrites() {
     // Local phone preview reaches emulators through Next. Java stays bound to
     // localhost, so it needs no inbound firewall exception. Never enabled in cloud.
-    if (
-      process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS !== 'true' ||
-      process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID !== 'demo-mitos'
-    )
-      return [];
+    if (!localEmulators) return [];
     return [
       {
         source: '/identitytoolkit.googleapis.com/:path*',
