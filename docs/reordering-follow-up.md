@@ -36,4 +36,15 @@ CLAUDE.md records them. Schema, cloud environment, accounts and rules are unchan
 - Physical iPhone touch/edge-scroll feel remains a device check. The pointer
   sensor supports touch and dnd-kit auto-scrolling is enabled.
 
-Release status: local verification complete; awaiting production deployment.
+## Live release
+
+App commit **a9f2a0949188edd821cf052fdb5e15a1c5f65aee** is committed and pushed.
+[GitHub CI passed](https://github.com/Andrew-C-Blevins/mitos/actions/runs/35797892755).
+Vercel deployment **dpl_3Rqj7XQZW4DUmNyQ7Xwycc1mwQuS** is Production/Ready and
+aliased to https://mitos.twelvedegrees.studio.
+
+Custom-domain home, item route, assets, manifest and icon returned 200. Published
+JavaScript contains the new sorting and unified Item controls and no old quick
+menu or move dropdown. Session/export/item DELETE still reject unauthenticated
+requests with 401. The deployment's bounded error-log scan returned no entries.
+No production item was modified during verification. Local services were stopped.

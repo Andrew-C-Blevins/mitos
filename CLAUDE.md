@@ -2,16 +2,18 @@
 
 ## Status and stop boundary
 
-The next September 22 refinement consolidates dates, snoozing, visibility and
-assignment on Item, removes the ellipsis/long-press modal, and replaces the Move
-dropdown with reusable drag-handle sorting. See docs/reordering-follow-up.md for
-verification/release status and components/ui/sortable-list/README.md for reuse.
-Later feature milestones remain paused.
+September 22 unified controls and drag reordering are live from app commit
+a9f2a09. Dates, snoozing, visibility and assignment are on Item; the ellipsis/
+long-press modal and Move dropdown are removed. Sorting uses the reusable
+components/ui/sortable-list primitive. Local checks and GitHub CI passed (run
+35797892755); production bundles and the custom domain were verified. See
+docs/reordering-follow-up.md and the component README. Physical iPhone touch
+feel remains a device check. Later feature milestones remain paused.
 
-September 22 deletion follow-up is live with its footer refinement from app commit
-eb58ce2. Delete sits at the bottom of Item and the actions menu alongside Done;
-the confirmation explains nested to-dos only when present. Permanent deletion from Item,
-Everything actions and Inbox. It removes item/log/proposal data atomically and
+The preceding September 22 deletion follow-up shipped its footer refinement in
+app commit eb58ce2. Delete remains at the bottom of Item beside Done and in Inbox;
+its former list actions menu has now been removed. The confirmation explains
+nested to-dos only when present. Deletion removes item/log/proposal data atomically and
 detaches separate sub-items without deleting them. Step edits/deletes render the
 confirmed transaction result immediately; confirmed to-do deletion updates cached
 lists immediately. See docs/deletion-follow-up.md for validation and release status.
@@ -64,7 +66,7 @@ Vercel is connected to GitHub. Production and preview use a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
 Production: https://mitos.twelvedegrees.studio
-(deployment dpl_HFGT6cEUtR5RvPK5hyiruoLMEWkZ, app source eb58ce2).
+(deployment dpl_3Rqj7XQZW4DUmNyQ7Xwycc1mwQuS, app source a9f2a09).
 Vercel reports Production/Ready. Ten production variables are configured;
 the runtime credential and account allowlist variables are sensitive. Production
 uses the existing Firebase data; no reseed or schema change occurred at launch.
