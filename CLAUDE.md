@@ -2,7 +2,7 @@
 
 ## Status and stop boundary
 
-September 22 deletion follow-up adds confirmed permanent deletion from Item,
+September 22 deletion follow-up is live from app commit df7a7e8 with confirmed permanent deletion from Item,
 Everything actions and Inbox. It removes item/log/proposal data atomically and
 detaches separate sub-items without deleting them. Step edits/deletes render the
 confirmed transaction result immediately; confirmed to-do deletion updates cached
@@ -56,7 +56,7 @@ Vercel is connected to GitHub. Production and preview use a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
 Production: https://mitos.twelvedegrees.studio
-(deployment dpl_8PMjjhibdcAHSErwY1TeG6x5GGt3, app source 79c5338).
+(deployment dpl_EPWtWXpUQLFg7tfTne9wSFd5GjpE, app source df7a7e8).
 Vercel reports Production/Ready. Ten production variables are configured;
 the runtime credential and account allowlist variables are sensitive. Production
 uses the existing Firebase data; no reseed or schema change occurred at launch.

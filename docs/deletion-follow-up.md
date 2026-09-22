@@ -1,6 +1,8 @@
 # September 22 deletion follow-up
 
-Status: implementation and local verification complete; production release pending.
+Status: live at https://mitos.twelvedegrees.studio from app commit df7a7e8.
+Vercel deployment dpl_EPWtWXpUQLFg7tfTne9wSFd5GjpE is Production/Ready with the
+custom-domain alias. GitHub CI passed: https://github.com/Andrew-C-Blevins/mitos/actions/runs/35791623514.
 
 ## Behavior
 
@@ -40,6 +42,12 @@ Status: implementation and local verification complete; production release pendi
 - Browser testing found an additional cached-list lag after server deletion; the
   session notification and stale-row suppression address it. Physical iPhone/Safari
   verification remains a user check. No real household items were deleted in testing.
+- Final fresh-browser verification confirms deletion returns to Everything with
+  zero remaining links for the deleted test item, without a reload. Production
+  home/assets return 200 and the published item bundle includes the confirmation.
+  The new DELETE endpoint returns 401 for both missing and invalid authentication;
+  the deployment error-log scan was empty. Signed-in destructive testing was local
+  only; no production household data was modified.
 
 ## Field distinctions
 
