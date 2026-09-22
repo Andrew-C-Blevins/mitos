@@ -1,8 +1,9 @@
 # September 22 deletion follow-up
 
-Status: live at https://mitos.twelvedegrees.studio from app commit df7a7e8.
-Vercel deployment dpl_EPWtWXpUQLFg7tfTne9wSFd5GjpE is Production/Ready with the
-custom-domain alias. GitHub CI passed: https://github.com/Andrew-C-Blevins/mitos/actions/runs/35791623514.
+Status: live at https://mitos.twelvedegrees.studio, including the footer refinement
+from app commit eb58ce2. Vercel deployment dpl_HFGT6cEUtR5RvPK5hyiruoLMEWkZ is
+Production/Ready with the custom-domain alias. Latest app CI:
+https://github.com/Andrew-C-Blevins/mitos/actions/runs/35795441209.
 
 ## Behavior
 
@@ -38,6 +39,9 @@ custom-domain alias. GitHub CI passed: https://github.com/Andrew-C-Blevins/mitos
   the bottom of the actions menu, matching Done, with no Delete beside Complete.
   The nested-to-do explanation is absent for a checklist-only item and appears
   when a separate nested to-do exists. Both confirmation checks were cancelled.
+  Delete and Done have matching 44-pixel touch targets, placed at opposite ends of
+  the footer. The published bundle includes the footer and conditional warning;
+  production HTTP/authentication checks pass and its error-log scan was empty.
 
 - 40 application/domain/route tests pass; deterministic-rules coverage remains 100%.
 - 26 emulator tests cover private/household authorization, revoked membership,
