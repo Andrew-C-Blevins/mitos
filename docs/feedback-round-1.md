@@ -1,7 +1,7 @@
 # September 22 feedback release
 
-Status: implemented and validated; commit and push approved. Production deployment
-and data changes await approval.
+Status: live in production from app commit 79c5338. Firebase rules/indexes and
+the approved household roles are deployed; the private checklist import is applied.
 This is a usability and permissions correction to the existing milestone. AI,
 Ready/Due/Review, external handoff, and section 7 remain unimplemented.
 
@@ -49,23 +49,31 @@ Ready/Due/Review, external handoff, and section 7 remain unimplemented.
 - An old restored-emulator sign-in failed token validation; signing out/in fixed
   it. A 401 now gives a sign-in-again message rather than a generic authorization error.
 
-## Prepared data changes
+## Applied data changes
 
-After approval, initialize the existing household with Andrew as admin and Karen
-as user. Read the current identity records to obtain UIDs; preserve membership.
-Do not re-run a broad seed or replace existing items. The archived seed record
-does not need deletion to disappear from routine Settings.
+The existing household was initialized with Andrew as admin and Karen as user,
+using the current identity records and preserving membership. No broad seed was
+rerun. The archived seed record is hidden from routine Settings.
 
-An ignored private import review contains 20 concise steps and the full source.
-It updates the existing Inbox entry, replaces its one truncated step, preserves
-the capture and old step in history, and appends the complete source in numbered
-notes. It stays private to Andrew and moves to Finance & Admin in Everything.
-No deadlines are inferred. Stop if the reviewed item version or source hash changes.
+The approved private import added 20 concise steps to the existing Inbox entry.
+It replaced its one truncated step, preserved
+the capture and old step in history, and appended the complete source in numbered
+notes. It remains private to Andrew under Finance & Admin in Everything.
+No deadlines were inferred. The item version and source hash were checked before
+applying, and every step plus the complete preserved source was verified afterward.
 No personal claim content belongs in GitHub, deployment source, or these notes.
 
-Publish the tested application and updated Firestore rules together; initialize
-adminUids before exposing admin management. No project creation, DNS, new cloud
-variables, model subscriptions or account provisioning is required.
+The tested application and updated Firestore rules were published together, with
+adminUids initialized before the application deployment. No project creation, DNS,
+new cloud variables, model subscriptions or account provisioning was needed.
+
+Production deployment: dpl_8PMjjhibdcAHSErwY1TeG6x5GGt3, Ready at
+https://mitos.twelvedegrees.studio. Settings and public assets return 200, while
+unauthenticated session/export/people requests return 401. The bounded deployment
+error-log query returned no errors. Production signed-in UI verification stopped
+at Google sign-in/browser control; the full UI flow was verified against emulators.
+Andrew's clarified commit-and-push expectation includes a live release and is
+recorded in AGENTS.md.
 
 ## Proposed next interaction
 

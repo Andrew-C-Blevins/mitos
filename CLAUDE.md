@@ -2,13 +2,16 @@
 
 ## Status and stop boundary
 
-September 22 feedback round: changes are implemented and validated; Andrew has
-authorized committing and pushing them. Deployment and cloud data changes remain
-pending approval. See docs/feedback-round-1.md. Andrew clarified
-that he should be an admin, Karen a user, multiple admins are allowed, and at least
-one active admin must remain. Cloud role initialization and the reviewed private
-20-step import are still pending the concrete release approval. The import draft
-and source are in ignored exports/; never commit personal claim material.
+September 22 feedback round is live from app commit 79c5338, with its Firebase
+rules/indexes deployed. Andrew is the admin and Karen a user; membership is
+preserved. Multiple admins are supported and at least one must remain active.
+The separately approved private 20-step import was applied and verified, with
+the original capture and full source preserved. Receipts and source are in ignored
+exports/; never commit personal claim material. See docs/feedback-round-1.md.
+
+Andrew explicitly clarified that future Mitos requests to commit and push include
+authorization and expectation of a live release. Follow AGENTS.md: deploy and
+verify production as part of the request, without an extra routine approval.
 
 The first M1 Item + Everything prototype was reviewed. Andrew approved cloud
 setup: the public GitHub repository and push, Firebase and Vercel projects,
@@ -47,8 +50,8 @@ Vercel is connected to GitHub. Production and preview use a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
 Production: https://mitos.twelvedegrees.studio
-(deployment dpl_Bc16Uhc2ZP66ZMDkGDQEYsZoNBeN, deployed source a63ee0d; app code
-548a850). Vercel reports Production/Ready. Ten production variables are configured;
+(deployment dpl_8PMjjhibdcAHSErwY1TeG6x5GGt3, app source 79c5338).
+Vercel reports Production/Ready. Ten production variables are configured;
 the runtime credential and account allowlist variables are sensitive. Production
 uses the existing Firebase data; no reseed or schema change occurred at launch.
 Cloudflare CNAME mitos points to 02909cac497db2a4.vercel-dns-017.com, DNS only,
@@ -58,6 +61,13 @@ pass: home/manifest/icon/CSS 200, correct fonts and bronze palette, session/expo
 401 without a valid token. A temporary local DNS cache delay cleared; the same
 checks now pass through normal DNS, and the production page opens in the browser.
 No certificate or security checks were disabled.
+
+September 22 checks: custom-host Settings/home/manifest/icon/CSS return 200;
+session/export and the new people PATCH route return 401 without authentication.
+The bounded error-log query for this deployment returned no errors. Signed-in
+browser verification stopped at Google sign-in/browser control; the same UI and
+mutation flow passed emulator testing. GitHub CI passed for 79c5338 (run
+35782703656). The release made no changes to DNS or cloud environment variables.
 
 Latest design preview: https://mitos-k5rp6nh37-andrew-c-blevins-projects.vercel.app
 (deployment dpl_HFNkJHtSgvecqACw9C6XDPYJVK8R, app source 548a850). Vercel reports
@@ -166,7 +176,7 @@ No Owen or Campbell records are created. Credentials have no client access and
 no document exists until a token is actually created; no empty collection needs
 provisioning in Firestore. Archived people are absent from pickers but retained
 in history. Membership comes from households.memberUids, never editable users.
-The pending release uses households.adminUids for household roles. No admin role
+The live release uses households.adminUids for household roles. No admin role
 grants access to someone else's private items. Person writes are denied to clients;
 PATCH /api/people/[id] validates the verified viewer and current household inside
 the transaction. Everyone may change only their own color; management requires an

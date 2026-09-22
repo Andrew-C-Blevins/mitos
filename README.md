@@ -7,8 +7,7 @@ revision 2. The first **Item + Everything design check** was reviewed; the
 approved production app is live, with later feature milestones still deferred.
 The source planner has not been changed or retired.
 
-The September 22 feedback fixes described below are implemented locally and
-await approval to publish. Production still runs the launch version. See
+The September 22 feedback fixes described below are live in production. See
 [the feedback release notes](docs/feedback-round-1.md).
 
 ## Run the local prototype
@@ -107,7 +106,7 @@ This writes versioned JSON to ignored `exports/`, including all authorized items
 their complete logs and targeted proposals, household and people records, and the
 requesting user's profile. Credentials and other owners' private items are excluded.
 Settings → Export data now downloads the same versioned JSON for the signed-in
-user. In the pending feedback release, only admins can archive/restore people
+user. Only admins can archive/restore people
 or assign roles. At least one active admin must remain. Archiving a login removes
 household access while retaining item history. Only unused archived people without
 a login can be permanently deleted. Each member can choose their own available
@@ -138,7 +137,8 @@ The subsequent Garden design is live at the custom production hostname above.
 Later feature milestones remain deferred. Vercel previews may ask for a Vercel
 account sign-in before the app's own Google sign-in. Production is configured;
 vercel.json still disables automatic main-branch deployments. Production updates
-are explicit operator actions. Other branches can deploy previews.
+are explicit operator actions. Andrew expects a Mitos commit-and-push request to
+include publishing and verifying the live release. Other branches can deploy previews.
 
 Firebase Admin is pinned to the current compatible 13.x release because the
 14.x dependency chain fails when Vercel disables `require(ESM)`. CI tests this
