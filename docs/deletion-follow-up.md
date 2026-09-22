@@ -6,8 +6,12 @@ custom-domain alias. GitHub CI passed: https://github.com/Andrew-C-Blevins/mitos
 
 ## Behavior
 
-- Item has a visible Delete action at the top. Everything's actions menu and
-  Inbox use the same confirmation dialog, with the item title, irreversible
+- Item and Everything's actions menu have a Delete action with a trash icon in
+  the bottom footer, separated from Complete and styled alongside Done. The
+  confirmation explains nested to-dos only when the selected item has them.
+  Checklist steps are deleted with the item; nested to-dos remain standalone.
+  Item, Everything's actions menu and Inbox use the same confirmation dialog,
+  with the item title, irreversible
   deletion explanation, safe initial focus and a busy state preventing double taps.
 - DELETE /api/items/[id] verifies Firebase authentication and the account allowlist,
   then checks current household membership, item visibility and the confirmed
@@ -28,6 +32,12 @@ custom-domain alias. GitHub CI passed: https://github.com/Andrew-C-Blevins/mitos
   cached rows; no deleted item content is stored in that set.
 
 ## Verification
+
+- The footer refinement passed the standard checks and production build. Phone
+  browser verification at 393 x 852 confirmed Delete below Item settings and at
+  the bottom of the actions menu, matching Done, with no Delete beside Complete.
+  The nested-to-do explanation is absent for a checklist-only item and appears
+  when a separate nested to-do exists. Both confirmation checks were cancelled.
 
 - 40 application/domain/route tests pass; deterministic-rules coverage remains 100%.
 - 26 emulator tests cover private/household authorization, revoked membership,

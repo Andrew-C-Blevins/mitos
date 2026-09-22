@@ -78,8 +78,8 @@ enabled. Their later milestones require approval.
 Unbuilt navigation and Shape/Work on this actions are hidden. Keep only moves
 an existing Inbox item to Everything; no model call or duplicate item is created.
 
-Delete a to-do from the Delete button at the top of its page, its list actions
-menu, or Inbox. The confirmation names the item and warns that deletion removes
+Delete a to-do from the Delete button at the bottom of its page or list actions
+menu, or from Inbox. The confirmation names the item and warns that deletion removes
 its steps, notes, original capture and history permanently. Separate sub-items
 remain as standalone to-dos. Complete and Cancel item still retain history.
 Step deletion updates the open page as soon as the save succeeds, without a reload.

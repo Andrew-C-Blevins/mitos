@@ -601,6 +601,9 @@ summary::-webkit-details-marker {
   border-radius: 24px;
 }
 .danger-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   background: var(--overdue, #9b3b30);
   color: white;
 }
@@ -1024,7 +1027,7 @@ summary::-webkit-details-marker {
 }
 .item-actions {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 13px;
   padding: 12px 0 22px;
 }
@@ -1250,6 +1253,29 @@ summary::-webkit-details-marker {
   min-height: 54px;
   cursor: pointer;
   color: var(--muted);
+}
+.footer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: 16px;
+}
+.footer-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 24px;
+  background: var(--selected);
+  font-size: 0.85rem;
+}
+.footer-actions .delete-entry {
+  margin-left: 0;
 }
 .settings-fields {
   display: grid;

@@ -171,9 +171,6 @@ export function ItemScreen({ id }: { id: string }) {
         <ArrowLeft size={16} /> Everything
       </Link>
       <div className="item-actions">
-        <button className="delete-entry" onClick={() => setDeleting(item)}>
-          <Trash2 size={16} /> Delete
-        </button>
         <button
           onClick={() =>
             run(() =>
@@ -652,6 +649,14 @@ export function ItemScreen({ id }: { id: string }) {
           </button>
         </div>
       </details>
+      <div className="footer-actions">
+        <button className="footer-action delete-entry" onClick={() => setDeleting(item)}>
+          <Trash2 size={16} aria-hidden="true" /> Delete
+        </button>
+        <Link className="footer-action" href="/">
+          Done
+        </Link>
+      </div>
       {deleting ? (
         <DeleteItemDialog
           item={deleting}

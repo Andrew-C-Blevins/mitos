@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown, ChevronRight, MoreHorizontal, Inbox, X } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, MoreHorizontal, Inbox, X, Trash2 } from 'lucide-react';
 import { categories, categoryLabels, type Item, type Person } from '@/lib/types';
 import { movedSortKey } from '@/lib/domain/ordering';
 import { saveError } from '@/lib/domain/input';
@@ -535,9 +535,6 @@ function QuickMenu({
           <X size={16} />
         </button>
       </div>
-      <button className="delete-entry" onClick={() => onDelete(item)}>
-        Delete to-do…
-      </button>
       <button onClick={() => save({ scope: 'household' })}>Move to household</button>
       <fieldset>
         <legend>Assign</legend>
@@ -637,8 +634,15 @@ function QuickMenu({
           {message}
         </p>
       ) : null}
-      <button onClick={onClose}>Done</button>
       {error ? <p role="alert">{error}</p> : null}
+      <div className="footer-actions">
+        <button className="footer-action delete-entry" onClick={() => onDelete(item)}>
+          <Trash2 size={16} aria-hidden="true" /> Delete
+        </button>
+        <button className="footer-action" onClick={onClose}>
+          Done
+        </button>
+      </div>
     </dialog>
   );
 }

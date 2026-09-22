@@ -1,8 +1,10 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
+import { Trash2 } from 'lucide-react';
 import type { Item } from '@/lib/types';
-import { deleteItem } from '@/lib/data/client/items';
+import { deleteItem, subscribeItems } from '@/lib/data/client/items';
 import { saveError } from '@/lib/domain/input';
+import { useSession } from './auth-provider';
 
 export function DeleteItemDialog({
   item,
@@ -14,13 +16,24 @@ export function DeleteItemDialog({
   onDeleted: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const { viewer } = useSession();
   const heading = useId(),
     description = useId();
   const [busy, setBusy] = useState(false),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [hasNestedItems, setHasNestedItems] = useState(false);
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
+  useEffect(
+    () =>
+      subscribeItems(
+        viewer,
+        (items) => setHasNestedItems(items.some((child) => child.parentId === item.id)),
+        (caught) => setError(saveError(caught)),
+      ),
+    [item.id, viewer],
+  );
   return (
     <dialog
       ref={dialog}
@@ -38,7 +51,12 @@ export function DeleteItemDialog({
         Permanently deletes this to-do, its steps, notes, and history. This cannot be undone.
       </p>
       {item.scope === 'household' ? <p>It will be removed for everyone in the household.</p> : null}
-      <p>Any separate sub-items will be kept.</p>
+      {hasNestedItems ? (
+        <p>
+          Nested to-dos will stay in Everything as separate entries. Checklist steps are deleted
+          with this to-do.
+        </p>
+      ) : null}
       <div className="delete-dialog-actions">
         <button autoFocus disabled={busy} onClick={onClose}>
           Keep to-do
@@ -58,7 +76,8 @@ export function DeleteItemDialog({
             }
           }}
         >
-          {busy ? 'Deleting…' : 'Delete permanently'}
+          <Trash2 size={16} aria-hidden="true" />
+          {busy ? 'Deleting…' : 'Delete'}
         </button>
       </div>
       {error ? <p role="alert">{error}</p> : null}
