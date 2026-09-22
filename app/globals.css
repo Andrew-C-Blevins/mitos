@@ -413,14 +413,6 @@ h1,
   border-radius: 50%;
   flex-shrink: 0;
 }
-.row-menu {
-  width: 44px;
-  flex: 0 0 44px;
-  height: 48px;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-}
 .swipe-action {
   position: absolute;
   inset: 0;
@@ -641,23 +633,6 @@ summary::-webkit-details-marker {
   justify-self: end;
   min-width: 90px;
 }
-.quick-menu {
-  display: none;
-}
-.quick-menu[open] {
-  display: grid;
-  gap: 8px;
-}
-.quick-menu > button {
-  text-align: left;
-  min-height: 44px;
-}
-.quick-menu > label {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  align-items: center;
-  font-size: 0.85rem;
-}
 .document {
   padding: 12px 24px 30px;
   background: var(--surface);
@@ -793,25 +768,6 @@ summary::-webkit-details-marker {
 }
 .color-choice:disabled span {
   opacity: 0.4;
-}
-.move-controls {
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-.move-controls label {
-  display: grid;
-  gap: 8px;
-  min-width: 0;
-}
-.move-controls select {
-  width: 100%;
-  min-width: 0;
-  max-width: 100%;
-}
-.move-controls button {
-  min-height: 44px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
 }
 .delete-entry {
   color: var(--red);
@@ -1358,4 +1314,68 @@ summary::-webkit-details-marker {
   *::after {
     transition: none !important;
   }
+}
+
+/* Shared sortable primitive takes theme tokens; its CSS also has standalone defaults. */
+.everything {
+  --sortable-surface: var(--paper);
+  --sortable-ink: var(--ink);
+  --sortable-accent: var(--thread);
+  --sortable-handle: var(--muted);
+  --sortable-placeholder: var(--selected);
+}
+.list-toolbar {
+  justify-content: space-between;
+  gap: 10px;
+}
+.reorder-hint {
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+.drag-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 52px;
+  padding: 7px 18px;
+}
+.drag-preview > div {
+  min-width: 0;
+}
+.drag-preview strong {
+  display: block;
+  font-size: 0.94rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.drag-preview small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.2;
+}
+.drag-preview-child {
+  padding-left: 50px;
+  border-top: 1px solid var(--line);
+}
+.item-people {
+  padding: 0;
+  gap: 12px;
+}
+.item-people fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+}
+.date-shortcuts {
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 10px;
+}
+.date-shortcuts button {
+  min-height: 44px;
 }

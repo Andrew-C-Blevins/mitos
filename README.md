@@ -59,9 +59,9 @@ exports their current state to ignored `.emulator-data`; the next run restores i
 - Item, built first: inline editing and adds, all specified content sections,
   questions-to-decisions, settings disclosure, recurrence, newest 20 log entries
   with older paging, permanent original capture.
-- Everything: manual ordering, Mine/Household/Karen/All and category/Waiting/
-  Recurring filters, nested display, long-press actions, swipe complete/snooze,
-  explicit Move before/Bottom controls, full category labels, collapsed Snoozed,
+- Everything: drag-handle manual ordering, Mine/Household/Karen/All and category/Waiting/
+  Recurring filters, nested display, swipe complete/snooze,
+  visible drag preview and live displacement, full category labels, collapsed Snoozed,
   manual Inbox with aligned touch targets.
 - Pure readiness, date, recurrence, ranking and proposal-precondition functions.
 - Default-deny rules, indexes, client/admin separation, allowlist checks, auth and
@@ -78,8 +78,12 @@ enabled. Their later milestones require approval.
 Unbuilt navigation and Shape/Work on this actions are hidden. Keep only moves
 an existing Inbox item to Everything; no model call or duplicate item is created.
 
-Delete a to-do from the Delete button at the bottom of its page or list actions
-menu, or from Inbox. The confirmation names the item and warns that deletion removes
+Dates, snoozing, visibility and assignment are directly on Item. The duplicate
+ellipsis modal is removed. See the [reusable sortable component](components/ui/sortable-list/README.md)
+and [release notes](docs/reordering-follow-up.md).
+
+Delete a to-do from the Delete button at the bottom of its page or from Inbox.
+The confirmation names the item and warns that deletion removes
 its steps, notes, original capture and history permanently. Separate sub-items
 remain as standalone to-dos. Complete and Cancel item still retain history.
 Step deletion updates the open page as soon as the save succeeds, without a reload.

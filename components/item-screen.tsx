@@ -31,7 +31,7 @@ import { subscribePeople } from '@/lib/data/client/people';
 import { useSession } from './auth-provider';
 import { InlineText } from './inline-text';
 import { DeleteItemDialog } from './delete-item-dialog';
-import { shortDate, dateMark, localDate } from '@/lib/domain/rules';
+import { shortDate, dateMark, localDate, addDays } from '@/lib/domain/rules';
 import { newId } from '@/lib/domain/ids';
 
 function DocumentSection({
@@ -50,7 +50,7 @@ function DocumentSection({
     </section>
   );
 }
-type OptionalSection = 'intent' | 'nextAction' | 'dates' | Section;
+type OptionalSection = 'intent' | 'nextAction' | Section;
 export function ItemScreen({ id }: { id: string }) {
   const router = useRouter();
   const { viewer, profile } = useSession();
@@ -64,6 +64,7 @@ export function ItemScreen({ id }: { id: string }) {
     [cursor, setCursor] = useState<QueryDocumentSnapshot>(),
     [hasOlder, setHasOlder] = useState(false),
     [error, setError] = useState(''),
+    [saved, setSaved] = useState(''),
     [revealed, setRevealed] = useState<OptionalSection | ''>(''),
     [deleting, setDeleting] = useState<Item | null>(null);
   useEffect(
@@ -110,8 +111,10 @@ export function ItemScreen({ id }: { id: string }) {
   );
   async function run(action: () => Promise<unknown>) {
     setError('');
+    setSaved('');
     try {
       await action();
+      setSaved('Saved.');
     } catch (caught) {
       setError(saveError(caught));
     }
@@ -148,11 +151,7 @@ export function ItemScreen({ id }: { id: string }) {
     updateFields(item, { [key]: text || null }, viewer);
   const show = (section: OptionalSection) =>
     revealed === section ||
-    (section === 'dates'
-      ? Boolean(item.dueDate || item.targetDate || item.availableFrom || item.snoozeUntil)
-      : Array.isArray(item[section])
-        ? item[section].length > 0
-        : Boolean(item[section]));
+    (Array.isArray(item[section]) ? item[section].length > 0 : Boolean(item[section]));
   const add = async (section: Section, text: string) => {
     if (!text) return;
     const base = { id: newId(), text };
@@ -237,34 +236,106 @@ export function ItemScreen({ id }: { id: string }) {
             />
           </DocumentSection>
         ) : null}
-        {show('dates') ? (
-          <DocumentSection title="Dates">
-            <div className="date-fields">
-              {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
-                <label key={key}>
-                  <span>
-                    {
+        <DocumentSection title="People">
+          <div className="settings-fields item-people">
+            <label>
+              Visibility
+              <select
+                value={item.scope}
+                onChange={(event) =>
+                  run(() =>
+                    updateFields(
+                      item,
                       {
-                        dueDate: 'Due',
-                        targetDate: 'Target',
-                        availableFrom: 'Available from',
-                        snoozeUntil: 'Snoozed until',
-                      }[key]
-                    }
-                  </span>
+                        scope: event.target.value as Item['scope'],
+                        ...(event.target.value === 'private'
+                          ? {
+                              ownerPersonIds: [
+                                ...new Set([...item.ownerPersonIds, viewer.personId]),
+                              ],
+                            }
+                          : {}),
+                      },
+                      viewer,
+                    ),
+                  )
+                }
+              >
+                <option value="private">Private to owners</option>
+                <option value="household">Household</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Assigned to</legend>
+              {activePeople.map((person) => (
+                <label key={person.id} className="check-row">
                   <input
-                    className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
-                    type="date"
-                    value={item[key] ?? ''}
-                    onChange={(event) =>
-                      run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
+                    type="checkbox"
+                    checked={item.ownerPersonIds.includes(person.id)}
+                    onChange={() =>
+                      run(() =>
+                        updateFields(
+                          item,
+                          {
+                            ownerPersonIds: item.ownerPersonIds.includes(person.id)
+                              ? item.ownerPersonIds.filter((id) => id !== person.id)
+                              : [...item.ownerPersonIds, person.id],
+                          },
+                          viewer,
+                        ),
+                      )
                     }
                   />
+                  <span className="owner-dot" style={{ background: person.color }} />
+                  {person.name}
                 </label>
               ))}
-            </div>
-          </DocumentSection>
-        ) : null}
+            </fieldset>
+          </div>
+        </DocumentSection>
+        <DocumentSection title="Dates">
+          <div className="date-fields">
+            {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
+              <label key={key}>
+                <span>
+                  {
+                    {
+                      dueDate: 'Due',
+                      targetDate: 'Target',
+                      availableFrom: 'Available from',
+                      snoozeUntil: 'Snoozed until',
+                    }[key]
+                  }
+                </span>
+                <input
+                  className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
+                  type="date"
+                  value={item[key] ?? ''}
+                  onChange={(event) =>
+                    run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <div className="inline-actions date-shortcuts">
+            <button
+              onClick={() =>
+                run(() => updateFields(item, { snoozeUntil: addDays(today, 7) }, viewer))
+              }
+            >
+              Snooze 1 week
+            </button>
+            {item.snoozeUntil ? (
+              <button onClick={() => run(() => updateFields(item, { snoozeUntil: null }, viewer))}>
+                Unsnooze
+              </button>
+            ) : null}
+            <span className="save-feedback" role="status">
+              {saved}
+            </span>
+          </div>
+        </DocumentSection>
         {show('needs') ? (
           <DocumentSection title="Needs">
             <ul className="document-list">
@@ -474,7 +545,6 @@ export function ItemScreen({ id }: { id: string }) {
             [
               ['intent', 'Why'],
               ['nextAction', 'Next action'],
-              ['dates', 'Dates'],
               ['needs', 'Needs'],
               ['questions', 'Open questions'],
               ['decisions', 'Decisions'],
@@ -513,57 +583,6 @@ export function ItemScreen({ id }: { id: string }) {
               ))}
             </select>
           </label>
-          <label>
-            Visibility
-            <select
-              value={item.scope}
-              onChange={(event) =>
-                run(() =>
-                  updateFields(
-                    item,
-                    {
-                      scope: event.target.value as Item['scope'],
-                      ...(event.target.value === 'private'
-                        ? {
-                            ownerPersonIds: [...new Set([...item.ownerPersonIds, viewer.personId])],
-                          }
-                        : {}),
-                    },
-                    viewer,
-                  ),
-                )
-              }
-            >
-              <option value="private">Private to owners</option>
-              <option value="household">Household</option>
-            </select>
-          </label>
-          <fieldset>
-            <legend>Owners</legend>
-            {activePeople.map((person) => (
-              <label key={person.id} className="check-row">
-                <input
-                  type="checkbox"
-                  checked={item.ownerPersonIds.includes(person.id)}
-                  onChange={() =>
-                    run(() =>
-                      updateFields(
-                        item,
-                        {
-                          ownerPersonIds: item.ownerPersonIds.includes(person.id)
-                            ? item.ownerPersonIds.filter((id) => id !== person.id)
-                            : [...item.ownerPersonIds, person.id],
-                        },
-                        viewer,
-                      ),
-                    )
-                  }
-                />
-                <span className="owner-dot" style={{ background: person.color }} />
-                {person.name}
-              </label>
-            ))}
-          </fieldset>
           <label>
             Effort
             <select

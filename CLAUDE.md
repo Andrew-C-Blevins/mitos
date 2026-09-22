@@ -2,6 +2,12 @@
 
 ## Status and stop boundary
 
+The next September 22 refinement consolidates dates, snoozing, visibility and
+assignment on Item, removes the ellipsis/long-press modal, and replaces the Move
+dropdown with reusable drag-handle sorting. See docs/reordering-follow-up.md for
+verification/release status and components/ui/sortable-list/README.md for reuse.
+Later feature milestones remain paused.
+
 September 22 deletion follow-up is live with its footer refinement from app commit
 eb58ce2. Delete sits at the bottom of Item and the actions menu alongside Done;
 the confirmation explains nested to-dos only when present. Permanent deletion from Item,
@@ -112,8 +118,15 @@ Within Firebase Admin only, uuid is pinned to registry-verified **11.1.1** to
 include the buffer-bounds security fix while retaining CommonJS support.
 Registry evidence and initial latest metadata: docs/registry-versions.json.
 
+The three @dnd-kit packages below were queried from the npm registry on
+2026-09-22: 0.5.0 is the current stable version; its React 18/19 peer range
+supports installed React 19.3.0. Exact versions are pinned in the lockfile.
+
 | Package                      | Resolved version |
 | ---------------------------- | ---------------- |
+| @dnd-kit/react               | 0.5.0            |
+| @dnd-kit/dom                 | 0.5.0            |
+| @dnd-kit/abstract            | 0.5.0            |
 | @js-temporal/polyfill        | 0.5.1            |
 | firebase                     | 12.19.0          |
 | firebase-admin               | 13.10.0          |
