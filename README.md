@@ -60,10 +60,14 @@ exports their current state to ignored `.emulator-data`; the next run restores i
 - Default-deny rules, indexes, client/admin separation, allowlist checks, auth and
   integration-token helpers, guarded Admin proposal application, export script.
 - Manifest, Apple icon, system light/dark theme, CI workflow.
+- Desktop list/detail workspace at 1200px and above; separate screens on phone.
+- Settings: household people, personal default context and authenticated JSON export.
+- Refined Garden styling: Fraunces headings, DM Sans text, muted green surfaces,
+  soft bronze threads and the Mitos wordmark with its trailing thread.
 
-Ready, Due, Review, Settings, AI, Shortcut, handoff and MCP screens/routes are not
-enabled. Their later milestones require design approval. No desktop-specific
-layout has been built. The placeholder navigation and Shape/Work on this actions
+Ready, Due, Review, AI, Shortcut, handoff and MCP screens/routes are not
+enabled. Their later milestones require approval.
+The placeholder navigation and Shape/Work on this actions
 are disabled; they do not silently invoke unimplemented behavior.
 
 ## Verification

@@ -30,9 +30,17 @@ import { InlineText } from './inline-text';
 import { shortDate, dateMark, localDate } from '@/lib/domain/rules';
 import { newId } from '@/lib/domain/ids';
 
-function DocumentSection({ title, children }: { title: string; children: ReactNode }) {
+function DocumentSection({
+  title,
+  children,
+  className = '',
+}: {
+  title: string;
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <section className="document-section">
+    <section className={`document-section ${className}`}>
       <h2>{title}</h2>
       <div>{children}</div>
     </section>
@@ -209,174 +217,179 @@ export function ItemScreen({ id }: { id: string }) {
           />
         </DocumentSection>
       ) : null}
-      {show('nextAction') ? (
-        <DocumentSection title="Next action">
-          <InlineText
-            value={item.nextAction}
-            placeholder="What moves this forward?"
-            onSave={(text) => field('nextAction', text)}
-          />
-        </DocumentSection>
-      ) : null}
-      {show('dates') ? (
-        <DocumentSection title="Dates">
-          <div className="date-fields">
-            {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
-              <label key={key}>
-                <span>
-                  {
+      <div className={`item-details ${show('nextAction') || show('steps') ? 'with-thread' : ''}`}>
+        {show('nextAction') ? (
+          <DocumentSection title="Next action" className="next-action">
+            <InlineText
+              value={item.nextAction}
+              placeholder="What moves this forward?"
+              onSave={(text) => field('nextAction', text)}
+            />
+          </DocumentSection>
+        ) : null}
+        {show('dates') ? (
+          <DocumentSection title="Dates">
+            <div className="date-fields">
+              {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
+                <label key={key}>
+                  <span>
                     {
-                      dueDate: 'Due',
-                      targetDate: 'Target',
-                      availableFrom: 'Available from',
-                      snoozeUntil: 'Snoozed until',
-                    }[key]
-                  }
-                </span>
-                <input
-                  className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
-                  type="date"
-                  value={item[key] ?? ''}
-                  onChange={(event) =>
-                    run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
-                  }
-                />
-              </label>
-            ))}
-          </div>
-        </DocumentSection>
-      ) : null}
-      {show('needs') ? (
-        <DocumentSection title="Needs">
-          <ul className="document-list">
-            {item.needs.map((need) => (
-              <li key={need.id}>
-                <div className="check-row">
+                      {
+                        dueDate: 'Due',
+                        targetDate: 'Target',
+                        availableFrom: 'Available from',
+                        snoozeUntil: 'Snoozed until',
+                      }[key]
+                    }
+                  </span>
+                  <input
+                    className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
+                    type="date"
+                    value={item[key] ?? ''}
+                    onChange={(event) =>
+                      run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </DocumentSection>
+        ) : null}
+        {show('needs') ? (
+          <DocumentSection title="Needs">
+            <ul className="document-list">
+              {item.needs.map((need) => (
+                <li key={need.id}>
+                  <div className="check-row">
+                    <input
+                      type="checkbox"
+                      aria-label={`Satisfy ${need.text}`}
+                      checked={need.satisfied}
+                      onChange={() =>
+                        run(() =>
+                          editEntry(item.id, 'needs', need, {
+                            ...need,
+                            satisfied: !need.satisfied,
+                          }),
+                        )
+                      }
+                    />
+                    <InlineText
+                      value={need.text}
+                      placeholder="Edit need"
+                      onSave={(text) => editEntry(item.id, 'needs', need, { ...need, text })}
+                    />
+                  </div>
+                  <div className="need-meta">
+                    <select
+                      aria-label={`Kind of ${need.text}`}
+                      value={need.kind}
+                      onChange={(event) =>
+                        run(() =>
+                          editEntry(item.id, 'needs', need, {
+                            ...need,
+                            kind: event.target.value as typeof need.kind,
+                          }),
+                        )
+                      }
+                    >
+                      {['material', 'person', 'info', 'decision'].map((kind) => (
+                        <option key={kind}>{kind}</option>
+                      ))}
+                    </select>
+                    <InlineText
+                      value={need.waitingOn}
+                      placeholder="Waiting on someone?"
+                      onSave={(text) =>
+                        editEntry(item.id, 'needs', need, { ...need, waitingOn: text || undefined })
+                      }
+                    />
+                  </div>
+                  {need.waitingOn && !need.satisfied ? (
+                    <button
+                      className="text-action"
+                      onClick={() =>
+                        run(() => addNote(item.id, `Followed up with ${need.waitingOn}.`, viewer))
+                      }
+                    >
+                      Log a follow-up
+                    </button>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+            <InlineText placeholder="Add a need…" onSave={(text) => add('needs', text)} />
+          </DocumentSection>
+        ) : null}
+        {show('questions') ? (
+          <DocumentSection title="Open questions">
+            <ul className="document-list">
+              {item.questions.map((question) => (
+                <li key={question.id}>
+                  <InlineText
+                    value={question.text}
+                    placeholder="Edit question"
+                    onSave={(text) =>
+                      editEntry(item.id, 'questions', question, { ...question, text })
+                    }
+                  />
+                  <InlineText
+                    placeholder="Answer and make a decision…"
+                    multiline
+                    onSave={(text) => answerQuestion(item.id, question, text)}
+                  />
+                </li>
+              ))}
+            </ul>
+            <InlineText placeholder="Add a question…" onSave={(text) => add('questions', text)} />
+          </DocumentSection>
+        ) : null}
+        {show('decisions') ? (
+          <DocumentSection title="Decisions">
+            <ul className="document-list">
+              {item.decisions.map((decision) => (
+                <li key={decision.id}>
+                  <InlineText
+                    value={decision.text}
+                    placeholder="Edit decision"
+                    multiline
+                    onSave={(text) =>
+                      editEntry(item.id, 'decisions', decision, { ...decision, text })
+                    }
+                  />
+                  {decision.rationale ? <p className="secondary">{decision.rationale}</p> : null}
+                </li>
+              ))}
+            </ul>
+            <InlineText placeholder="Add a decision…" onSave={(text) => add('decisions', text)} />
+          </DocumentSection>
+        ) : null}
+        {show('steps') ? (
+          <DocumentSection title="Steps" className="steps-section">
+            <ul className="document-list step-list">
+              {item.steps.map((step) => (
+                <li key={step.id} className="check-row">
                   <input
                     type="checkbox"
-                    aria-label={`Satisfy ${need.text}`}
-                    checked={need.satisfied}
+                    aria-label={`Complete step: ${step.text}`}
+                    checked={step.done}
                     onChange={() =>
-                      run(() =>
-                        editEntry(item.id, 'needs', need, { ...need, satisfied: !need.satisfied }),
-                      )
+                      run(() => editEntry(item.id, 'steps', step, { ...step, done: !step.done }))
                     }
                   />
                   <InlineText
-                    value={need.text}
-                    placeholder="Edit need"
-                    onSave={(text) => editEntry(item.id, 'needs', need, { ...need, text })}
+                    className={step.done ? 'done-text' : ''}
+                    value={step.text}
+                    placeholder="Edit step"
+                    onSave={(text) => editEntry(item.id, 'steps', step, { ...step, text })}
                   />
-                </div>
-                <div className="need-meta">
-                  <select
-                    aria-label={`Kind of ${need.text}`}
-                    value={need.kind}
-                    onChange={(event) =>
-                      run(() =>
-                        editEntry(item.id, 'needs', need, {
-                          ...need,
-                          kind: event.target.value as typeof need.kind,
-                        }),
-                      )
-                    }
-                  >
-                    {['material', 'person', 'info', 'decision'].map((kind) => (
-                      <option key={kind}>{kind}</option>
-                    ))}
-                  </select>
-                  <InlineText
-                    value={need.waitingOn}
-                    placeholder="Waiting on someone?"
-                    onSave={(text) =>
-                      editEntry(item.id, 'needs', need, { ...need, waitingOn: text || undefined })
-                    }
-                  />
-                </div>
-                {need.waitingOn && !need.satisfied ? (
-                  <button
-                    className="text-action"
-                    onClick={() =>
-                      run(() => addNote(item.id, `Followed up with ${need.waitingOn}.`, viewer))
-                    }
-                  >
-                    Log a follow-up
-                  </button>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-          <InlineText placeholder="Add a need…" onSave={(text) => add('needs', text)} />
-        </DocumentSection>
-      ) : null}
-      {show('questions') ? (
-        <DocumentSection title="Open questions">
-          <ul className="document-list">
-            {item.questions.map((question) => (
-              <li key={question.id}>
-                <InlineText
-                  value={question.text}
-                  placeholder="Edit question"
-                  onSave={(text) =>
-                    editEntry(item.id, 'questions', question, { ...question, text })
-                  }
-                />
-                <InlineText
-                  placeholder="Answer and make a decision…"
-                  multiline
-                  onSave={(text) => answerQuestion(item.id, question, text)}
-                />
-              </li>
-            ))}
-          </ul>
-          <InlineText placeholder="Add a question…" onSave={(text) => add('questions', text)} />
-        </DocumentSection>
-      ) : null}
-      {show('decisions') ? (
-        <DocumentSection title="Decisions">
-          <ul className="document-list">
-            {item.decisions.map((decision) => (
-              <li key={decision.id}>
-                <InlineText
-                  value={decision.text}
-                  placeholder="Edit decision"
-                  multiline
-                  onSave={(text) =>
-                    editEntry(item.id, 'decisions', decision, { ...decision, text })
-                  }
-                />
-                {decision.rationale ? <p className="secondary">{decision.rationale}</p> : null}
-              </li>
-            ))}
-          </ul>
-          <InlineText placeholder="Add a decision…" onSave={(text) => add('decisions', text)} />
-        </DocumentSection>
-      ) : null}
-      {show('steps') ? (
-        <DocumentSection title="Steps">
-          <ul className="document-list">
-            {item.steps.map((step) => (
-              <li key={step.id} className="check-row">
-                <input
-                  type="checkbox"
-                  aria-label={`Complete step: ${step.text}`}
-                  checked={step.done}
-                  onChange={() =>
-                    run(() => editEntry(item.id, 'steps', step, { ...step, done: !step.done }))
-                  }
-                />
-                <InlineText
-                  className={step.done ? 'done-text' : ''}
-                  value={step.text}
-                  placeholder="Edit step"
-                  onSave={(text) => editEntry(item.id, 'steps', step, { ...step, text })}
-                />
-              </li>
-            ))}
-          </ul>
-          <InlineText placeholder="Add a step…" onSave={(text) => add('steps', text)} />
-        </DocumentSection>
-      ) : null}
+                </li>
+              ))}
+            </ul>
+            <InlineText placeholder="Add a step…" onSave={(text) => add('steps', text)} />
+          </DocumentSection>
+        ) : null}
+      </div>
       <DocumentSection title="Log">
         <InlineText
           placeholder="Add a note…"

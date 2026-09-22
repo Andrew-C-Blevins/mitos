@@ -14,9 +14,12 @@ household profile were independently verified. The hosted checkpoint passed.
 Andrew then approved the desktop list/detail split and Settings (household people,
 personal default context and Export data). These are implemented, verified on
 desktop and phone, and deployed to the updated preview. M2 and later features
-remain paused. Andrew rejected the austere ledger
-aesthetic and requested three contrasting concepts before choosing a new look;
-the actual app still uses its existing palette. See docs/design-direction.md.
+remain paused. Andrew chose the refined Garden direction: muted green, Fraunces
+headings, circular controls and soft bronze threads. The header is Mitos with a
+small trailing thread to its right, with no household label or leading symbol.
+Andrew requested implementation, commit and push of this direction. It is now
+applied across Everything, Item, capture, Settings and sign-in. Existing content
+order and item behavior are preserved. See docs/design-direction.md.
 The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
@@ -42,8 +45,11 @@ enabled. CI, cloud runtime credential reads and production dependency audit pass
 Cloud env is preview-scoped; production is not configured. vercel.json disables
 automatic deployments from main until production is approved; other branches
 can produce previews. Explicit CLI preview deployments remain available.
-The hostname needs review;
-do not replace planner.twelvedegrees.studio while the old service still exists.
+On 2026-09-21, mitos.twelvedegrees.studio returned DNS NXDOMAIN and was absent
+from the Vercel project's assigned domains. It is not live. Production env,
+production deployment, custom domain assignment, DNS and its Firebase authorized
+hostname require explicit launch approval. Do not replace
+planner.twelvedegrees.studio while the old service still exists.
 Node 24 is the tested runtime (local 24.14.0); npm 11.11.0; portable Java 21 is used
 for the local Firestore emulator. No system-wide Java install. Emulator services
 bind to 127.0.0.1; Next proxies browser requests for same-Wi-Fi phone checks.

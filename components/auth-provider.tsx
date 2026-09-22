@@ -1,4 +1,5 @@
 'use client';
+import { Brand } from './brand';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import {
   GoogleAuthProvider,
@@ -118,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   return (
     <main className="sign-in">
-      <span className="wordmark">Mitos</span>
+      <Brand />
       <h1>A place for what’s next.</h1>
       {loading ? (
         <p role="status">Opening your household…</p>

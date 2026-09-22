@@ -6,6 +6,7 @@ import { Plus, List, ArrowUpRight, CalendarDays, CheckCheck, LogOut, Settings } 
 import { logout, useSession } from './auth-provider';
 import { CaptureSheet } from './capture-sheet';
 import { PlannerWorkspace } from './planner-workspace';
+import { Brand } from './brand';
 export function AppShell({ children }: { children: ReactNode }) {
   const [captureOpen, setCaptureOpen] = useState(false),
     [message, setMessage] = useState('');
@@ -32,8 +33,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <div className="app-shell">
       <header className="app-header">
-        <Link className="wordmark" href="/">
-          Mitos
+        <Link className="brand-link" href="/" aria-label="Mitos home">
+          <Brand />
         </Link>
         <div className="account">
           <span>{profile.name.split(' ')[0]}</span>

@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { DM_Sans, Fraunces } from 'next/font/google';
 import { AuthProvider } from '@/components/auth-provider';
 import { AppShell } from '@/components/app-shell';
 import './globals.css';
-const geist = Geist({ subsets: ['latin'], variable: '--font-geist' });
-const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono' });
+const sans = DM_Sans({ subsets: ['latin'], variable: '--font-dm-sans' });
+const display = Fraunces({ subsets: ['latin'], variable: '--font-fraunces' });
 export const metadata: Metadata = {
   title: 'Mitos',
   description: 'A shared household action system.',
@@ -16,14 +16,14 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f7f7f5' },
-    { media: '(prefers-color-scheme: dark)', color: '#141414' },
+    { media: '(prefers-color-scheme: light)', color: '#eaeae5' },
+    { media: '(prefers-color-scheme: dark)', color: '#252b2b' },
   ],
 };
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} ${mono.variable}`}>
+      <body className={`${sans.variable} ${display.variable}`}>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

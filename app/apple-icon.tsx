@@ -10,8 +10,8 @@ export default function Icon() {
         justifyContent: 'center',
         width: '100%',
         height: '100%',
-        color: '#f7f7f5',
-        background: '#141414',
+        color: '#f8f7f2',
+        background: '#536e62',
         fontSize: 112,
         fontWeight: 600,
       }}

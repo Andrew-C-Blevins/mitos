@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'A shared household action system',
     start_url: '/',
     display: 'standalone',
-    background_color: '#f7f7f5',
-    theme_color: '#f7f7f5',
+    background_color: '#eaeae5',
+    theme_color: '#eaeae5',
     icons: [{ src: '/apple-icon', sizes: '180x180', type: 'image/png' }],
   };
 }
