@@ -36,8 +36,8 @@ and circular step controls. Checking a step does not automatically replace the
 next action. Sign-in, capture, Settings and the home-screen icon use the same palette.
 
 The information architecture, privacy rules and feature scope are preserved.
-Ready, Due, Review and AI remain deferred. Production launch and custom DNS still
-require explicit approval; mitos.twelvedegrees.studio is not configured.
+Ready, Due, Review and AI remain deferred. Andrew subsequently approved the
+production launch and custom DNS at https://mitos.twelvedegrees.studio.
 
 Validation: production build, lint, type checks, 28 application tests and 14
 Firestore rules tests pass. Browser review covers 1440px desktop and 390px phone,
@@ -48,8 +48,6 @@ adding a theme override to the app. The temporary fixture and proxy are removed
 after review. Application data and authentication logic are unchanged.
 
 Published source: 548a850, pushed to main; GitHub CI run 35680033480 passed.
-The updated Vercel preview is Ready and serves HTTP 200, but authorizing its new
-hostname for Google sign-in was blocked by automatic approval review. The new
-preview is not a usable replacement for the previous signed-in preview until
-that exact hostname is approved. See CLAUDE.md for deployment addresses and the
-remaining production/custom-domain approval.
+The production deployment and updated preview are Ready. The custom production
+hostname and new preview are both authorized for Google sign-in following Andrew's
+explicit launch approval. See CLAUDE.md for deployment addresses and verification.

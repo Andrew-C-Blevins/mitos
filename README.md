@@ -1,8 +1,10 @@
 # Mitos
 
+[Open Mitos](https://mitos.twelvedegrees.studio) — sign in with your approved Google account.
+
 A phone-first household action ledger, built from `planner-design-brief.md`
 revision 2. The first **Item + Everything design check** was reviewed; the
-approved cloud preview is deployed, with later feature milestones still deferred.
+approved production app is live, with later feature milestones still deferred.
 The source planner has not been changed or retired.
 
 ## Run the local prototype

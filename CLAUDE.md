@@ -5,7 +5,7 @@
 The first M1 Item + Everything prototype was reviewed. Andrew approved cloud
 setup: the public GitHub repository and push, Firebase and Vercel projects,
 preview environment variables, rules/indexes deployment and household/data seed.
-This approval does not extend to later feature milestones, AI, custom DNS or
+This approval does not extend to later feature milestones, AI or
 retiring Flask/the tunnel. Andrew also approved the Mitos runtime service account
 and key, and granted Vercel GitHub app access. The hosted preview is deployed.
 On 2026-09-21 Andrew confirmed all 24 active items are visible and tapping them
@@ -20,6 +20,9 @@ small trailing thread to its right, with no household label or leading symbol.
 Andrew requested implementation, commit and push of this direction. It is now
 applied across Everything, Item, capture, Settings and sign-in. Existing content
 order and item behavior are preserved. See docs/design-direction.md.
+Andrew then explicitly approved launching at mitos.twelvedegrees.studio,
+including production env/deployment, Cloudflare DNS, and Firebase Google sign-in
+authorization for the custom domain and the latest preview hostname.
 The app/package/repo is mitos.
 
 Source: planner-design-brief.md revision 2 (2026-09-21), read in full. Sections
@@ -32,29 +35,41 @@ No model calls, AI SDK, agent endpoint or MCP server is enabled.
 Hosting: Vercel Hobby project mitos in andrew-c-blevins-projects; GitHub repository
 Andrew-C-Blevins/mitos. Firebase project mitos-twelvedegrees has Google sign-in,
 Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
-Vercel is connected to GitHub. The preview runtime uses a Mitos-only service
+Vercel is connected to GitHub. Production and preview use a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
+Production: https://mitos.twelvedegrees.studio
+(deployment dpl_Bc16Uhc2ZP66ZMDkGDQEYsZoNBeN, deployed source a63ee0d; app code
+548a850). Vercel reports Production/Ready. Ten production variables are configured;
+the runtime credential and account allowlist variables are sensitive. Production
+uses the existing Firebase data; no reseed or schema change occurred at launch.
+Cloudflare CNAME mitos points to 02909cac497db2a4.vercel-dns-017.com, DNS only,
+TTL Auto. Vercel reports misconfigured=false. Both Google and Cloudflare DNS-over-
+HTTPS resolve the new CNAME. HTTPS certificate validation and custom-host checks
+pass: home/manifest/icon/CSS 200, correct fonts and bronze palette, session/export
+401 without a valid token. A temporary local DNS cache delay cleared; the same
+checks now pass through normal DNS, and the production page opens in the browser.
+No certificate or security checks were disabled.
+
 Latest design preview: https://mitos-k5rp6nh37-andrew-c-blevins-projects.vercel.app
 (deployment dpl_HFNkJHtSgvecqACw9C6XDPYJVK8R, app source 548a850). Vercel reports
 Preview/Ready; HTTP home 200, unauthenticated POST /api/session 401. GitHub CI passed
-for 548a850 (run 35680033480). The new hostname is NOT yet authorized for Google
-sign-in: automatic approval review rejected that Firebase allowlist expansion,
-requiring explicit approval for the exact new hostname. Do not retry or work
-around that block without approval. The previous working preview remains
+for 548a850 (run 35680033480). Both this preview and the custom production hostname
+are now authorized for Firebase Google sign-in. The earlier automatic-review block
+was resolved by Andrew's explicit launch approval, and the applied allowlist was
+read back successfully. The previous preview remains
 https://mitos-k7rdd9us8-andrew-c-blevins-projects.vercel.app (old design).
-Deployment protection remains enabled. Cloud runtime credential reads and the
-production dependency audit passed at the preceding checkpoint.
+Preview deployment protection remains enabled. Production serves the Mitos
+sign-in page publicly; item data remains protected by Firebase authentication,
+the account allowlist and Firestore rules. A read-only cloud export check at
+launch confirms 39 authorized items, 24 active, full histories and three people.
+The production dependency audit passed at the preceding checkpoint.
 .firebaserc defaults to demo-mitos; cloud is an explicit separate alias.
 .env.local remains local-only; .env.cloud.local holds ignored operator config.
-Cloud env is preview-scoped; production is not configured. vercel.json disables
-automatic deployments from main until production is approved; other branches
-can produce previews. Explicit CLI preview deployments remain available.
-On 2026-09-21, mitos.twelvedegrees.studio returned DNS NXDOMAIN and was absent
-from the Vercel project's assigned domains. It is not live. Production env,
-production deployment, custom domain assignment, DNS and its Firebase authorized
-hostname require explicit launch approval. Do not replace
-planner.twelvedegrees.studio while the old service still exists.
+Cloud env is configured for preview and production. vercel.json continues to
+disable automatic deployments from main; production releases remain explicit
+CLI actions. Other branches can produce previews. Do not replace or retire
+planner.twelvedegrees.studio without the separate migration/retirement approval.
 Node 24 is the tested runtime (local 24.14.0); npm 11.11.0; portable Java 21 is used
 for the local Firestore emulator. No system-wide Java install. Emulator services
 bind to 127.0.0.1; Next proxies browser requests for same-Wi-Fi phone checks.
