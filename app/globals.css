@@ -577,6 +577,33 @@ summary::-webkit-details-marker {
 .capture-sheet::backdrop {
   background: #0006;
 }
+.delete-dialog h2 {
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+.delete-dialog p {
+  margin-top: 16px;
+}
+.delete-title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.delete-dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+.delete-dialog-actions button {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 24px;
+}
+.danger-button {
+  background: var(--overdue, #9b3b30);
+  color: white;
+}
 .sheet-heading {
   display: flex;
   justify-content: space-between;

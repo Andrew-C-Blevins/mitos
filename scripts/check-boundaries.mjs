@@ -25,6 +25,8 @@ for (const file of [...(await files('app/api')), ...(await files('lib/ai'))]) {
   function visit(node) {
     if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node)) {
       const path = node.moduleSpecifier?.text ?? '';
+      if (/data\/admin\/delete-item/.test(path) && file !== 'app/api/items/[id]/route.ts')
+        violations.push(`${file}: permanent deletion is allowed only in the human DELETE route`);
       if (/firebase(-admin)?\/(firestore|app)|data\/client/.test(path))
         violations.push(
           `${file}: raw Firebase/client data access is forbidden in server routes and AI`,
@@ -71,4 +73,6 @@ if (violations.length) {
   console.error(violations.join('\n'));
   process.exitCode = 1;
 } else
-  console.log('Item-write import boundary passed. No AI or API route can import item mutations.');
+  console.log(
+    'Item-write boundary passed. Only the human DELETE route can import permanent deletion; AI cannot import item mutations.',
+  );

@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, Trash2 } from 'lucide-react';
 import { saveError } from '@/lib/domain/input';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import {
@@ -13,6 +14,7 @@ import {
   type Person,
   type LogEntry,
   type Section,
+  type SectionEntry,
 } from '@/lib/types';
 import {
   subscribeItem,
@@ -28,6 +30,7 @@ import {
 import { subscribePeople } from '@/lib/data/client/people';
 import { useSession } from './auth-provider';
 import { InlineText } from './inline-text';
+import { DeleteItemDialog } from './delete-item-dialog';
 import { shortDate, dateMark, localDate } from '@/lib/domain/rules';
 import { newId } from '@/lib/domain/ids';
 
@@ -49,8 +52,10 @@ function DocumentSection({
 }
 type OptionalSection = 'intent' | 'nextAction' | 'dates' | Section;
 export function ItemScreen({ id }: { id: string }) {
+  const router = useRouter();
   const { viewer, profile } = useSession();
   const logInitialized = useRef(false);
+  const confirmedVersion = useRef(0);
   const [item, setItem] = useState<Item | null>(null),
     [loaded, setLoaded] = useState(false),
     [people, setPeople] = useState<Person[]>([]),
@@ -59,13 +64,16 @@ export function ItemScreen({ id }: { id: string }) {
     [cursor, setCursor] = useState<QueryDocumentSnapshot>(),
     [hasOlder, setHasOlder] = useState(false),
     [error, setError] = useState(''),
-    [revealed, setRevealed] = useState<OptionalSection | ''>('');
+    [revealed, setRevealed] = useState<OptionalSection | ''>(''),
+    [deleting, setDeleting] = useState<Item | null>(null);
   useEffect(
     () =>
       subscribeItem(
         id,
         (value) => {
-          setItem(value);
+          setItem((current) =>
+            current && value && value.version < confirmedVersion.current ? current : value,
+          );
           setLoaded(true);
         },
         (error) => {
@@ -107,6 +115,15 @@ export function ItemScreen({ id }: { id: string }) {
     } catch (caught) {
       setError(saveError(caught));
     }
+  }
+  async function changeEntry(section: Section, before: SectionEntry, after?: SectionEntry) {
+    const saved = await editEntry(id, section, before, after);
+    confirmedVersion.current = Math.max(confirmedVersion.current, saved.version);
+    // Render the committed result even when the live Listen stream is delayed.
+    // Keep any newer update that already arrived from another device.
+    setItem((current) =>
+      current?.id === saved.id && current.version <= saved.version ? saved : current,
+    );
   }
   if (!loaded)
     return (
@@ -154,6 +171,9 @@ export function ItemScreen({ id }: { id: string }) {
         <ArrowLeft size={16} /> Everything
       </Link>
       <div className="item-actions">
+        <button className="delete-entry" onClick={() => setDeleting(item)}>
+          <Trash2 size={16} /> Delete
+        </button>
         <button
           onClick={() =>
             run(() =>
@@ -260,7 +280,7 @@ export function ItemScreen({ id }: { id: string }) {
                       checked={need.satisfied}
                       onChange={() =>
                         run(() =>
-                          editEntry(item.id, 'needs', need, {
+                          changeEntry('needs', need, {
                             ...need,
                             satisfied: !need.satisfied,
                           }),
@@ -270,8 +290,8 @@ export function ItemScreen({ id }: { id: string }) {
                     <InlineText
                       value={need.text}
                       placeholder="Edit need"
-                      onSave={(text) => editEntry(item.id, 'needs', need, { ...need, text })}
-                      onDelete={() => editEntry(item.id, 'needs', need)}
+                      onSave={(text) => changeEntry('needs', need, { ...need, text })}
+                      onDelete={() => changeEntry('needs', need)}
                     />
                   </div>
                   <div className="need-meta">
@@ -280,7 +300,7 @@ export function ItemScreen({ id }: { id: string }) {
                       value={need.kind}
                       onChange={(event) =>
                         run(() =>
-                          editEntry(item.id, 'needs', need, {
+                          changeEntry('needs', need, {
                             ...need,
                             kind: event.target.value as typeof need.kind,
                           }),
@@ -295,7 +315,7 @@ export function ItemScreen({ id }: { id: string }) {
                       value={need.waitingOn}
                       placeholder="Waiting on someone?"
                       onSave={(text) =>
-                        editEntry(item.id, 'needs', need, { ...need, waitingOn: text || undefined })
+                        changeEntry('needs', need, { ...need, waitingOn: text || undefined })
                       }
                     />
                   </div>
@@ -323,10 +343,8 @@ export function ItemScreen({ id }: { id: string }) {
                   <InlineText
                     value={question.text}
                     placeholder="Edit question"
-                    onDelete={() => editEntry(item.id, 'questions', question)}
-                    onSave={(text) =>
-                      editEntry(item.id, 'questions', question, { ...question, text })
-                    }
+                    onDelete={() => changeEntry('questions', question)}
+                    onSave={(text) => changeEntry('questions', question, { ...question, text })}
                   />
                   <InlineText
                     placeholder="Answer and make a decision…"
@@ -347,11 +365,9 @@ export function ItemScreen({ id }: { id: string }) {
                   <InlineText
                     value={decision.text}
                     placeholder="Edit decision"
-                    onDelete={() => editEntry(item.id, 'decisions', decision)}
+                    onDelete={() => changeEntry('decisions', decision)}
                     multiline
-                    onSave={(text) =>
-                      editEntry(item.id, 'decisions', decision, { ...decision, text })
-                    }
+                    onSave={(text) => changeEntry('decisions', decision, { ...decision, text })}
                   />
                   {decision.rationale ? <p className="secondary">{decision.rationale}</p> : null}
                 </li>
@@ -370,15 +386,15 @@ export function ItemScreen({ id }: { id: string }) {
                     aria-label={`Complete step: ${step.text}`}
                     checked={step.done}
                     onChange={() =>
-                      run(() => editEntry(item.id, 'steps', step, { ...step, done: !step.done }))
+                      run(() => changeEntry('steps', step, { ...step, done: !step.done }))
                     }
                   />
                   <InlineText
                     className={step.done ? 'done-text' : ''}
                     value={step.text}
                     placeholder="Edit step"
-                    onDelete={() => editEntry(item.id, 'steps', step)}
-                    onSave={(text) => editEntry(item.id, 'steps', step, { ...step, text })}
+                    onDelete={() => changeEntry('steps', step)}
+                    onSave={(text) => changeEntry('steps', step, { ...step, text })}
                   />
                 </li>
               ))}
@@ -636,6 +652,13 @@ export function ItemScreen({ id }: { id: string }) {
           </button>
         </div>
       </details>
+      {deleting ? (
+        <DeleteItemDialog
+          item={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => router.replace('/')}
+        />
+      ) : null}
     </article>
   );
 }

@@ -78,6 +78,12 @@ enabled. Their later milestones require approval.
 Unbuilt navigation and Shape/Work on this actions are hidden. Keep only moves
 an existing Inbox item to Everything; no model call or duplicate item is created.
 
+Delete a to-do from the Delete button at the top of its page, its list actions
+menu, or Inbox. The confirmation names the item and warns that deletion removes
+its steps, notes, original capture and history permanently. Separate sub-items
+remain as standalone to-dos. Complete and Cancel item still retain history.
+Step deletion updates the open page as soon as the save succeeds, without a reload.
+
 ## Verification
 
 ```powershell
@@ -89,7 +95,7 @@ npm run test:rules
 `test:rules` starts its own Firestore emulator: stop an existing emulator first.
 With the emulator already running, use
 `npx vitest run --config vitest.rules.config.ts` instead. Rules tests use a separate
-`demo-mitos-rules` and `demo-mitos-people-tests` namespaces and cannot clear preview records.
+`demo-mitos-*` test namespaces and cannot clear preview records.
 
 CI runs lint, typecheck, unit coverage, rules tests, production build and the
 item-write import boundary on pushes and pull requests in
@@ -173,7 +179,9 @@ manifest is reviewed and retirement is approved.
   retained: adds use `arrayUnion`; existing-entry edits run an online transaction
   with preconditioned `arrayRemove`/`arrayUnion`. They never rewrite the whole array.
   Whole arrays of owners and contexts are intentionally conditional/scalar fields.
-- Inbox Delete cancels the item so the permanent capture log survives.
+- Confirmed Delete permanently removes the item, all log entries and its proposals
+  in one authenticated server transaction. The original capture is retained until
+  the user explicitly deletes the item. Direct client deletes remain denied.
 - New-item proposals lack a reader/household ACL envelope in the brief. They fail
   closed until that is specified at M3; no AI or agent endpoints exist here.
 - Migration does not invent missing intent or original timestamps. Existing

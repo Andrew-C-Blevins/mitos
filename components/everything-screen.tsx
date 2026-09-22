@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronRight, MoreHorizontal, Inbox, X } from 'lucide-react';
 import { categories, categoryLabels, type Item, type Person } from '@/lib/types';
@@ -10,10 +10,13 @@ import { subscribeItems, updateFields, complete } from '@/lib/data/client/items'
 import { subscribePeople } from '@/lib/data/client/people';
 import { isSnoozed, dateMark, localDate, addDays } from '@/lib/domain/rules';
 import { useSession } from './auth-provider';
+import { DeleteItemDialog } from './delete-item-dialog';
 
 type Filter = 'mine' | 'household' | 'karen' | 'all';
 type Sort = 'manual' | 'due' | 'target';
 export function EverythingScreen() {
+  const router = useRouter(),
+    pathname = usePathname();
   const { viewer } = useSession();
   const [items, setItems] = useState<Item[]>([]),
     [people, setPeople] = useState<Person[]>([]),
@@ -27,7 +30,9 @@ export function EverythingScreen() {
     [sort, setSort] = useState<Sort>('manual'),
     [quick, setQuick] = useState<Item | null>(null),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
-    [inboxOpen, setInboxOpen] = useState(false);
+    [inboxOpen, setInboxOpen] = useState(false),
+    [deleting, setDeleting] = useState<Item | null>(null),
+    [message, setMessage] = useState('');
   useEffect(
     () =>
       subscribeItems(
@@ -195,6 +200,11 @@ export function EverythingScreen() {
           {error}
         </p>
       ) : null}
+      {message ? (
+        <p className="save-feedback" role="status">
+          {message}
+        </p>
+      ) : null}
       {pending ? (
         <p className="sync-note" role="status">
           Changes waiting to sync.
@@ -227,20 +237,7 @@ export function EverythingScreen() {
                       Keep
                     </button>
                     <Link href={`/items/${item.id}`}>Edit</Link>
-                    <button
-                      onClick={() =>
-                        run(() =>
-                          updateFields(
-                            item,
-                            { status: 'cancelled' },
-                            viewer,
-                            'Deleted from Inbox; original capture preserved.',
-                          ),
-                        )
-                      }
-                    >
-                      Delete
-                    </button>
+                    <button onClick={() => setDeleting(item)}>Delete</button>
                   </div>
                 </div>
               ))
@@ -288,6 +285,10 @@ export function EverythingScreen() {
           item={items.find((item) => item.id === quick.id) ?? quick}
           people={people}
           onClose={() => setQuick(null)}
+          onDelete={(item) => {
+            setQuick(null);
+            setDeleting(item);
+          }}
           onSnooze={(date) => snooze(quick, date)}
           siblings={items
             .filter(
@@ -305,6 +306,18 @@ export function EverythingScreen() {
               viewer,
             );
             setSort('manual');
+          }}
+        />
+      ) : null}
+      {deleting ? (
+        <DeleteItemDialog
+          item={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setItems((current) => current.filter((item) => item.id !== deleting.id));
+            setDeleting(null);
+            setMessage('To-do permanently deleted.');
+            if (pathname === `/items/${deleting.id}`) router.replace('/');
           }}
         />
       ) : null}
@@ -476,6 +489,7 @@ function QuickMenu({
   item,
   people,
   onClose,
+  onDelete,
   onSnooze,
   onMove,
   siblings,
@@ -483,6 +497,7 @@ function QuickMenu({
   item: Item;
   people: Person[];
   onClose: () => void;
+  onDelete: (item: Item) => void;
   onSnooze: (date?: string) => void;
   onMove: (destination: string) => Promise<void>;
   siblings: Item[];
@@ -520,6 +535,9 @@ function QuickMenu({
           <X size={16} />
         </button>
       </div>
+      <button className="delete-entry" onClick={() => onDelete(item)}>
+        Delete to-do…
+      </button>
       <button onClick={() => save({ scope: 'household' })}>Move to household</button>
       <fieldset>
         <legend>Assign</legend>

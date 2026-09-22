@@ -2,6 +2,12 @@
 
 ## Status and stop boundary
 
+September 22 deletion follow-up adds confirmed permanent deletion from Item,
+Everything actions and Inbox. It removes item/log/proposal data atomically and
+detaches separate sub-items without deleting them. Step edits/deletes render the
+confirmed transaction result immediately; confirmed to-do deletion updates cached
+lists immediately. See docs/deletion-follow-up.md for validation and release status.
+
 September 22 feedback round is live from app commit 79c5338, with its Firebase
 rules/indexes deployed. Andrew is the admin and Karen a user; membership is
 preserved. Multiple admins are supported and at least one must remain active.
@@ -151,6 +157,8 @@ Registry evidence and initial latest metadata: docs/registry-versions.json.
 - lib/data/client/: Firebase browser reads and human writes; persistent cache on
   secure origins; per-field updates and array transforms, no whole-item replacement.
 - lib/data/admin/items.ts: authorized getItem/listItems and applyProposal only.
+- lib/data/admin/delete-item.ts: narrowly allowed human DELETE route; current
+  membership/ownership, version confirmation, atomic item/log/proposal deletion.
 - lib/data/admin/export.ts: authorized items with full histories, own profile,
   household and people; no credentials or another person's private items.
 - lib/data/admin/proposals.ts: future AI/agent proposal-only writes.
@@ -186,12 +194,16 @@ membership as a user. Only unused archived records without logins can be deleted
 
 Humans write directly through the client SDK under rules; createdBy/createdAt/
 household are immutable, version increments on every item write, and capture/log
-records are append-only with the human UID. Inbox Delete cancels to retain history.
+records are append-only with the human UID while the item exists. Confirmed Delete
+permanently removes the item, every log entry and its target proposals, with no
+tombstone or deletion log. Separate sub-items lose parentId and remain editable.
+The server rechecks household membership, item visibility and the confirmed version.
 Original capture accepts up to 50,000 characters without truncation. The short
 title is derived from its first line; normal notes remain capped at 4,000.
-AI/agents may eventually create proposals only. Admin item writes are restricted
-to reviewed applyProposal transactions; its mutator cannot be imported by API/AI
-code. No apply route is exposed yet. CI checks import structure using TypeScript AST.
+AI/agents may eventually create proposals only. Admin item writes use reviewed
+applyProposal transactions, plus the explicit human DELETE adapter. The latter is
+importable only by app/api/items/[id]/route.ts; neither mutation is importable by
+AI/agent code. No apply route is exposed yet. CI checks imports using TypeScript AST.
 
 Private items require ownership and household membership. Household items require
 membership. Queries carry both household and visibility constraints. Server routes
@@ -200,7 +212,7 @@ Local .test emails are emulator-only. The deployment script renders the real env
 allowlist into an ignored rules copy, with an explicit approval argument and a
 non-demo-project guard. Real account emails do not appear in application source.
 
-The first log preserves original capture forever. Logs load newest 20 and page
+The first log preserves original capture until explicit permanent deletion. Logs load newest 20 and page
 back. Small sections are arrays with stable ids. Firestore cannot edit a nested
 array object by field path: existing-entry edits use an online transaction with
 arrayRemove/arrayUnion and a precondition, never a stale whole-array overwrite.

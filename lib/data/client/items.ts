@@ -26,6 +26,12 @@ import { equal } from '@/lib/domain/proposals';
 import { newId } from '@/lib/domain/ids';
 import type { Item, LogEntry, Viewer, Section, SectionEntry } from '@/lib/types';
 
+// Server-side deletes do not enter Firestore's local write queue. Suppress stale
+// cached rows immediately after confirmation, including after client navigation.
+// IDs only; no deleted content or history is retained here.
+const confirmedDeletions = new Set<string>();
+const deletionListeners = new Set<() => void>();
+
 export function subscribeItems(
   viewer: Viewer,
   onItems: (items: Item[], pending: boolean) => void,
@@ -34,6 +40,14 @@ export function subscribeItems(
   const { db } = getFirebase();
   const buckets = new Map<string, Item[]>(),
     pending = new Map<string, boolean>();
+  const emit = () =>
+    onItems(
+      [...new Map([...buckets.values()].flat().map((item) => [item.id, item])).values()]
+        .filter((item) => !confirmedDeletions.has(item.id))
+        .sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0)),
+      [...pending.values()].some(Boolean),
+    );
+  deletionListeners.add(emit);
   const queries = viewer.householdIds.flatMap((id) => [
     query(
       collection(db, 'items'),
@@ -60,12 +74,7 @@ export function subscribeItems(
             snapshot.docs.map((doc) => validateItem(decode<Item>(doc.id, doc.data()))),
           );
           pending.set(String(index), snapshot.metadata.hasPendingWrites);
-          onItems(
-            [...new Map([...buckets.values()].flat().map((item) => [item.id, item])).values()].sort(
-              (a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0),
-            ),
-            [...pending.values()].some(Boolean),
-          );
+          emit();
         } catch (error) {
           onError(error as Error);
         }
@@ -73,7 +82,10 @@ export function subscribeItems(
       onError,
     ),
   );
-  return () => stops.forEach((stop) => stop());
+  return () => {
+    stops.forEach((stop) => stop());
+    deletionListeners.delete(emit);
+  };
 }
 export function subscribeItem(
   id: string,
@@ -171,6 +183,22 @@ export function complete(item: Item, viewer: Viewer) {
     item.recurrence ? 'Completed this occurrence.' : 'Completed.',
   );
 }
+export async function deleteItem(item: Item) {
+  const user = getFirebase().auth.currentUser;
+  if (!user) throw new Error('Sign in before deleting an item.');
+  const response = await fetch(`/api/items/${item.id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${await user.getIdToken()}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ version: item.version }),
+  });
+  if (response.status === 401) throw new Error('Please sign out and sign in again, then retry.');
+  if (!response.ok) throw new Error((await response.json()).error ?? 'Could not delete.');
+  confirmedDeletions.add(item.id);
+  deletionListeners.forEach((notify) => notify());
+}
 export function addEntry(item: Item, section: Section, entry: SectionEntry) {
   validateItem({ ...item, [section]: [...item[section], entry] });
   const batch = writeBatch(getFirebase().db),
@@ -204,13 +232,20 @@ export function editEntry(
       );
     const rows = item[section].filter((row) => row.id !== before.id);
     if (after) rows.push(after as never);
-    validateItem({ ...item, [section]: rows });
-    transaction.update(ref, { [section]: arrayRemove(encodeNested(before)) });
-    transaction.update(ref, {
-      ...(after ? { [section]: arrayUnion(encodeNested(after)) } : {}),
-      version: increment(1),
-      updatedAt: Timestamp.now(),
+    const updatedAt = Timestamp.now();
+    const saved = validateItem({
+      ...item,
+      [section]: rows,
+      version: item.version + 1,
+      updatedAt: updatedAt.toDate().toISOString(),
     });
+    if (after) transaction.update(ref, { [section]: arrayRemove(encodeNested(before)) });
+    transaction.update(ref, {
+      [section]: after ? arrayUnion(encodeNested(after)) : arrayRemove(encodeNested(before)),
+      version: increment(1),
+      updatedAt,
+    });
+    return saved;
   });
 }
 export function answerQuestion(
