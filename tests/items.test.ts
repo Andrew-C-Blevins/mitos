@@ -4,7 +4,32 @@ import { applyProposal, equal } from '@/lib/domain/proposals';
 import { migrateTask } from '@/lib/domain/migration';
 import { item, viewer, now, context } from './fixtures';
 import type { Change } from '@/lib/types';
+import { validateCapture } from '@/lib/domain/input';
+import { movedSortKey } from '@/lib/domain/ordering';
 describe('capture, validation and authorization', () => {
+  it('accepts a long pasted checklist without forcing it into the title or losing the source', () => {
+    const raw =
+      '  # Submit the claim\r\n' +
+      Array.from({ length: 20 }, (_, i) => `${i + 1}. ${'Instructions '.repeat(30)}`).join('\r\n') +
+      '\r\n';
+    expect(validateCapture(raw)).toBe(raw);
+    expect(captureItem(raw, viewer, now, 'long').title).toBe('Submit the claim');
+    expect(captureItem('x'.repeat(1000), viewer, now, 'prose').title.length).toBeLessThanOrEqual(
+      160,
+    );
+    expect(() => captureItem('x'.repeat(50001), viewer, now, 'too-long')).toThrow('50,000');
+  });
+  it('moves to a chosen sibling position, including the bottom, without changing other items', () => {
+    const first = item({ id: 'first', sortKey: 'a0' }),
+      second = item({ id: 'second', sortKey: 'a1' }),
+      last = item({ id: 'last', sortKey: 'a2' });
+    const rows = [first, second, last];
+    expect(movedSortKey(rows, last, 'second') > first.sortKey).toBe(true);
+    expect(movedSortKey(rows, last, 'second') < second.sortKey).toBe(true);
+    expect(movedSortKey(rows, first, 'end') > last.sortKey).toBe(true);
+    expect(() => movedSortKey(rows, first, 'missing')).toThrow();
+    expect(rows[1].sortKey).toBe('a1');
+  });
   it('captures privately with the exact default fields and no invented intent', () => {
     const saved = captureItem('  Buy caulk  ', viewer, now, 'capture-id');
     expect(saved).toMatchObject({

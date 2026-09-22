@@ -2,6 +2,14 @@
 
 ## Status and stop boundary
 
+September 22 feedback round: changes are implemented and validated; Andrew has
+authorized committing and pushing them. Deployment and cloud data changes remain
+pending approval. See docs/feedback-round-1.md. Andrew clarified
+that he should be an admin, Karen a user, multiple admins are allowed, and at least
+one active admin must remain. Cloud role initialization and the reviewed private
+20-step import are still pending the concrete release approval. The import draft
+and source are in ignored exports/; never commit personal claim material.
+
 The first M1 Item + Everything prototype was reviewed. Andrew approved cloud
 setup: the public GitHub repository and push, Firebase and Vercel projects,
 preview environment variables, rules/indexes deployment and household/data seed.
@@ -136,6 +144,8 @@ Registry evidence and initial latest metadata: docs/registry-versions.json.
 - lib/data/admin/export.ts: authorized items with full histories, own profile,
   household and people; no credentials or another person's private items.
 - lib/data/admin/proposals.ts: future AI/agent proposal-only writes.
+- lib/data/admin/people.ts: authenticated profile/member transactions, active-admin
+  retention, unique colors and membership revocation; no item writes.
 - lib/data/codec.ts: Firestore timestamps to ISO instants at the domain boundary;
   calendar dates stay YYYY-MM-DD in the viewer's local timezone.
 - lib/auth/: verified-ID-token allowlist, credential hash checks and user provisioning.
@@ -155,11 +165,20 @@ UIDs; Diana is archived with no UID. Users are logins; people are durable people
 No Owen or Campbell records are created. Credentials have no client access and
 no document exists until a token is actually created; no empty collection needs
 provisioning in Firestore. Archived people are absent from pickers but retained
-in history. membership comes from households.memberUids, never editable users.
+in history. Membership comes from households.memberUids, never editable users.
+The pending release uses households.adminUids for household roles. No admin role
+grants access to someone else's private items. Person writes are denied to clients;
+PATCH /api/people/[id] validates the verified viewer and current household inside
+the transaction. Everyone may change only their own color; management requires an
+admin. All household people are read transactionally to guard concurrent color and
+last-admin changes. Archiving a login removes memberUids/adminUids; restoring grants
+membership as a user. Only unused archived records without logins can be deleted.
 
 Humans write directly through the client SDK under rules; createdBy/createdAt/
 household are immutable, version increments on every item write, and capture/log
 records are append-only with the human UID. Inbox Delete cancels to retain history.
+Original capture accepts up to 50,000 characters without truncation. The short
+title is derived from its first line; normal notes remain capped at 4,000.
 AI/agents may eventually create proposals only. Admin item writes are restricted
 to reviewed applyProposal transactions; its mutator cannot be imported by API/AI
 code. No apply route is exposed yet. CI checks import structure using TypeScript AST.

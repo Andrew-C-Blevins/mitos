@@ -1,5 +1,6 @@
 import { generateKeyBetween } from 'fractional-indexing';
 import { itemSchema, type Item, type Viewer } from '@/lib/types';
+import { validateCapture } from './input';
 
 export function captureItem(
   text: string,
@@ -8,9 +9,14 @@ export function captureItem(
   id: string,
   sortKey = generateKeyBetween(null, null) + id.replace(/[^0-9A-Za-z]/g, '') + '1',
 ): Item {
+  validateCapture(text);
+  const firstLine = text
+    .trim()
+    .split(/\r?\n/)[0]
+    .replace(/^#+\s+/, '');
   return itemSchema.parse({
     id,
-    title: text.trim(),
+    title: firstLine.length > 160 ? `${firstLine.slice(0, 157).trimEnd()}…` : firstLine,
     status: 'inbox',
     scope: 'private',
     householdId: viewer.householdIds[0],

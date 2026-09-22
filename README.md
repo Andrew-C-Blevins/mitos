@@ -7,6 +7,10 @@ revision 2. The first **Item + Everything design check** was reviewed; the
 approved production app is live, with later feature milestones still deferred.
 The source planner has not been changed or retired.
 
+The September 22 feedback fixes described below are implemented locally and
+await approval to publish. Production still runs the launch version. See
+[the feedback release notes](docs/feedback-round-1.md).
+
 ## Run the local prototype
 
 Requires Node 24 and Java 21 for the Firestore emulator. Java can be portable;
@@ -51,26 +55,29 @@ exports their current state to ignored `.emulator-data`; the next run restores i
 
 ## Implemented at this checkpoint
 
-- Firebase client writes, offline capture, field updates and real-time reads.
+- Firebase client writes, offline capture up to 50,000 characters, field updates
+  and real-time reads. Capture keeps the full source and derives a short title.
 - Item, built first: inline editing and adds, all specified content sections,
   questions-to-decisions, settings disclosure, recurrence, newest 20 log entries
   with older paging, permanent original capture.
 - Everything: manual ordering, Mine/Household/Karen/All and category/Waiting/
   Recurring filters, nested display, long-press actions, swipe complete/snooze,
-  touch drag handles and move-to-top alternative, collapsed Snoozed, manual Inbox.
+  explicit Move before/Bottom controls, full category labels, collapsed Snoozed,
+  manual Inbox with aligned touch targets.
 - Pure readiness, date, recurrence, ranking and proposal-precondition functions.
 - Default-deny rules, indexes, client/admin separation, allowlist checks, auth and
   integration-token helpers, guarded Admin proposal application, export script.
 - Manifest, Apple icon, system light/dark theme, CI workflow.
 - Desktop list/detail workspace at 1200px and above; separate screens on phone.
-- Settings: household people, personal default context and authenticated JSON export.
+- Settings: household admin/user roles, unique personal colors, archived people
+  hidden by default, visible save feedback, close controls and JSON export.
 - Refined Garden styling: Fraunces headings, DM Sans text, muted green surfaces,
   soft bronze threads and the Mitos wordmark with its trailing thread.
 
 Ready, Due, Review, AI, Shortcut, handoff and MCP screens/routes are not
 enabled. Their later milestones require approval.
-The placeholder navigation and Shape/Work on this actions
-are disabled; they do not silently invoke unimplemented behavior.
+Unbuilt navigation and Shape/Work on this actions are hidden. Keep only moves
+an existing Inbox item to Everything; no model call or duplicate item is created.
 
 ## Verification
 
@@ -83,7 +90,7 @@ npm run test:rules
 `test:rules` starts its own Firestore emulator: stop an existing emulator first.
 With the emulator already running, use
 `npx vitest run --config vitest.rules.config.ts` instead. Rules tests use a separate
-`demo-mitos-rules` namespace and cannot clear preview records.
+`demo-mitos-rules` and `demo-mitos-people-tests` namespaces and cannot clear preview records.
 
 CI runs lint, typecheck, unit coverage, rules tests, production build and the
 item-write import boundary on pushes and pull requests in
@@ -100,8 +107,11 @@ This writes versioned JSON to ignored `exports/`, including all authorized items
 their complete logs and targeted proposals, household and people records, and the
 requesting user's profile. Credentials and other owners' private items are excluded.
 Settings → Export data now downloads the same versioned JSON for the signed-in
-user. Settings also lets household members archive/restore people and save their
-own default context. The context will become Ready's starting filter in M2.
+user. In the pending feedback release, only admins can archive/restore people
+or assign roles. At least one active admin must remain. Archiving a login removes
+household access while retaining item history. Only unused archived people without
+a login can be permanently deleted. Each member can choose their own available
+color and save their default context. The context will become Ready's starting filter in M2.
 At 1200px and above, Everything and the selected item appear side by side with
 a left navigation rail. Phones retain the separate list and item pages.
 
@@ -124,11 +134,11 @@ items load and tapping them opens the correct item details. Google sign-in and
 household profile creation were also verified. This checkpoint has passed;
 the desktop split and Settings were subsequently approved, implemented and
 deployed to the updated preview linked above.
-Later milestones and a replacement visual direction await review. Vercel may ask for a Vercel account sign-in
-before the app's own Google sign-in. Production is not configured;
-vercel.json disables automatic main-branch deployments until
-production is approved. Other branches can deploy previews, and explicit CLI
-preview deployments remain available.
+The subsequent Garden design is live at the custom production hostname above.
+Later feature milestones remain deferred. Vercel previews may ask for a Vercel
+account sign-in before the app's own Google sign-in. Production is configured;
+vercel.json still disables automatic main-branch deployments. Production updates
+are explicit operator actions. Other branches can deploy previews.
 
 Firebase Admin is pinned to the current compatible 13.x release because the
 14.x dependency chain fails when Vercel disables `require(ESM)`. CI tests this

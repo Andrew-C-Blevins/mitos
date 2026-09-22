@@ -33,6 +33,7 @@ const seed = async (path: string, data: Record<string, unknown>) => {
 await seed('households/blevins', {
   name: 'Blevins',
   memberUids: ['local-andrew', 'local-karen'],
+  adminUids: ['local-andrew'],
   createdAt: Timestamp.fromDate(new Date(now)),
 });
 await seed('people/andrew', {

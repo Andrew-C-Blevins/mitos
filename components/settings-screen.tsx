@@ -1,10 +1,13 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Download } from 'lucide-react';
+import { Download, X } from 'lucide-react';
+import Link from 'next/link';
 import { useSession } from './auth-provider';
-import { subscribePeople, setPersonStatus } from '@/lib/data/client/people';
+import { subscribePeople, subscribeHousehold, updatePerson } from '@/lib/data/client/people';
 import { setDefaultContext } from '@/lib/data/client/profile';
-import { contexts, type Context, type Person } from '@/lib/types';
+import { contexts, type Context, type Person, type Household } from '@/lib/types';
+import { personColors, type PersonChange } from '@/lib/domain/people';
+import { SaveFeedback } from './save-feedback';
 
 export function SettingsScreen() {
   const { user, profile, viewer } = useSession();
@@ -50,12 +53,28 @@ export function SettingsScreen() {
   }
   return (
     <div className="settings-page">
-      <h1>Settings</h1>
+      <div className="settings-heading">
+        <h1>Settings</h1>
+        <Link href="/" aria-label="Close settings">
+          <X size={22} />
+        </Link>
+      </div>
+      <p className="secondary">Changes save as you make them.</p>
+      <div className="settings-feedback">
+        <SaveFeedback message={pending ? 'Saving…' : error || message} error={Boolean(error)} />
+      </div>
       <section className="settings-section" aria-labelledby="people-heading">
         <h2 id="people-heading">Household people</h2>
-        <p>Archived people stay in your history and leave the owner picker.</p>
+        <p>Everyone can choose their own color. Admins manage household members.</p>
         {viewer.householdIds.map((id) => (
-          <HouseholdPeople key={id} householdId={id} />
+          <HouseholdPeople
+            key={id}
+            householdId={id}
+            onSaved={(message) => {
+              setError('');
+              setMessage(message);
+            }}
+          />
         ))}
       </section>
       <section className="settings-section" aria-labelledby="context-heading">
@@ -91,69 +110,179 @@ export function SettingsScreen() {
           {pending === 'export' ? 'Preparing export…' : 'Export data'}
         </button>
       </section>
-      {message ? <p role="status">{message}</p> : null}
-      {error ? (
-        <p className="error" role="alert">
-          {error}
-        </p>
-      ) : null}
+      <Link className="settings-done primary-button" href="/">
+        Done
+      </Link>
     </div>
   );
 }
 
-function HouseholdPeople({ householdId }: { householdId: string }) {
+function HouseholdPeople({
+  householdId,
+  onSaved,
+}: {
+  householdId: string;
+  onSaved: (message: string) => void;
+}) {
+  const { viewer } = useSession();
   const [people, setPeople] = useState<Person[] | null>(null);
+  const [household, setHousehold] = useState<Household | null>(null);
   const [pending, setPending] = useState('');
   const [error, setError] = useState('');
   useEffect(
     () => subscribePeople(householdId, setPeople, (caught) => setError(caught.message)),
     [householdId],
   );
-  async function toggle(person: Person) {
+  useEffect(
+    () => subscribeHousehold(householdId, setHousehold, (caught) => setError(caught.message)),
+    [householdId],
+  );
+  const isAdmin = Boolean(household?.adminUids?.includes(viewer.uid));
+  async function change(person: Person, change: PersonChange) {
     setPending(person.id);
     setError('');
+    onSaved('');
     try {
-      await setPersonStatus(person.id, person.status === 'active' ? 'archived' : 'active');
+      await updatePerson(person.id, change);
+      onSaved(
+        change.action === 'color'
+          ? 'Your color is saved.'
+          : change.action === 'delete'
+            ? 'Archived person removed.'
+            : 'Household changes saved.',
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not update this person.');
     } finally {
       setPending('');
     }
   }
+  function rows(source: Person[]) {
+    return (
+      <ul className="people-settings">
+        {source
+          .sort((a, b) => a.name.localeCompare(b.name))
+          .map((person) => (
+            <li key={person.id}>
+              <span className="person-swatch" style={{ background: person.color }} />
+              <span className="person-label">
+                {person.name}
+                {person.id === viewer.personId ? ' (you)' : ''}
+                <small>
+                  {person.status === 'archived'
+                    ? 'Archived'
+                    : household?.adminUids?.includes(person.uid ?? '')
+                      ? 'Admin'
+                      : 'User'}
+                </small>
+              </span>
+              {isAdmin ? (
+                <details className="person-controls">
+                  <summary>Manage</summary>
+                  {person.status === 'active' && person.uid ? (
+                    <label>
+                      Role
+                      <select
+                        aria-label={`Role for ${person.name}`}
+                        disabled={Boolean(pending)}
+                        value={household?.adminUids?.includes(person.uid) ? 'admin' : 'user'}
+                        onChange={(event) =>
+                          change(person, {
+                            action: 'role',
+                            value: event.target.value as 'admin' | 'user',
+                          })
+                        }
+                      >
+                        <option value="user">User</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </label>
+                  ) : null}
+                  <button
+                    disabled={Boolean(pending)}
+                    onClick={() => {
+                      if (
+                        person.uid &&
+                        person.status === 'active' &&
+                        !window.confirm(
+                          `Archive ${person.name}? This removes their household access. Their item history will remain.`,
+                        )
+                      )
+                        return;
+                      void change(person, {
+                        action: 'status',
+                        value: person.status === 'active' ? 'archived' : 'active',
+                      });
+                    }}
+                  >
+                    {person.status === 'active' ? 'Archive' : 'Restore'}
+                  </button>
+                  {person.status === 'archived' && !person.uid ? (
+                    <button
+                      disabled={Boolean(pending)}
+                      onClick={() => {
+                        if (
+                          window.confirm(
+                            `Delete the archived person ${person.name}? This is allowed only if no item refers to them.`,
+                          )
+                        )
+                          void change(person, { action: 'delete' });
+                      }}
+                    >
+                      Delete
+                    </button>
+                  ) : null}
+                </details>
+              ) : null}
+            </li>
+          ))}
+      </ul>
+    );
+  }
   return (
     <>
       {people ? (
-        <ul className="people-settings">
-          {[...people]
-            .sort(
-              (a, b) =>
-                Number(a.status === 'archived') - Number(b.status === 'archived') ||
-                a.name.localeCompare(b.name),
-            )
-            .map((person) => (
-              <li key={person.id}>
-                <span className="person-swatch" style={{ background: person.color }} />
-                <span className="person-label">
-                  {person.name}
-                  <small>{person.status === 'active' ? 'Active' : 'Archived'}</small>
-                </span>
+        <>
+          {rows(people.filter((person) => person.status === 'active'))}
+          <fieldset className="color-picker">
+            <legend>Your color</legend>
+            {personColors.map((color) => {
+              const mine = people.find((person) => person.id === viewer.personId);
+              const taken = people.some(
+                (person) =>
+                  person.id !== viewer.personId &&
+                  person.status === 'active' &&
+                  person.color.toLowerCase() === color.value,
+              );
+              return (
                 <button
-                  disabled={Boolean(pending)}
-                  onClick={() => toggle(person)}
-                  aria-label={`${person.status === 'active' ? 'Archive' : 'Restore'} ${person.name}`}
+                  key={color.value}
+                  type="button"
+                  style={{ '--swatch': color.value } as React.CSSProperties}
+                  className="color-choice"
+                  aria-label={`${color.label}${taken ? ' (in use)' : ''}`}
+                  aria-pressed={mine?.color.toLowerCase() === color.value}
+                  disabled={Boolean(pending) || taken || !mine}
+                  onClick={() => mine && change(mine, { action: 'color', value: color.value })}
                 >
-                  {pending === person.id
-                    ? 'Saving…'
-                    : person.status === 'active'
-                      ? 'Archive'
-                      : 'Restore'}
+                  <span />
+                  {color.label}
                 </button>
-              </li>
-            ))}
-        </ul>
+              );
+            })}
+          </fieldset>
+          {isAdmin && people.some((person) => person.status === 'archived') ? (
+            <details className="archived-people">
+              <summary>Archived people</summary>
+              <p>Archived members have no household access. Their history is preserved.</p>
+              {rows(people.filter((person) => person.status === 'archived'))}
+            </details>
+          ) : null}
+        </>
       ) : (
         <p role="status">Loading people…</p>
       )}
+      {pending ? <SaveFeedback message="Saving…" /> : null}
       {error ? (
         <p className="error" role="alert">
           {error}

@@ -75,6 +75,7 @@ beforeEach(async () => {
     batch.set(doc(db, 'households/blevins'), {
       name: 'Blevins',
       memberUids: ['andrew-uid', 'karen-uid'],
+      adminUids: ['andrew-uid'],
       createdAt,
     });
     for (const name of ['andrew', 'karen']) {
@@ -142,15 +143,17 @@ beforeEach(async () => {
   });
 });
 describe('membership, privacy and account boundaries', () => {
-  it('allows only personal context changes and household person status changes in Settings', async () => {
+  it('allows personal context changes but requires the server for person management', async () => {
     const profile = doc(andrew(), 'users/andrew-uid');
     await assertSucceeds(updateDoc(profile, { defaultContext: 'yard' }));
     await assertSucceeds(updateDoc(profile, { defaultContext: deleteField() }));
     await assertFails(updateDoc(profile, { defaultContext: 'office' }));
     await assertFails(updateDoc(doc(karen(), 'users/andrew-uid'), { defaultContext: 'home' }));
     const person = doc(andrew(), 'people/diana');
-    await assertSucceeds(updateDoc(person, { status: 'active' }));
-    await assertSucceeds(updateDoc(person, { status: 'archived' }));
+    await assertFails(updateDoc(person, { status: 'active' }));
+    await assertFails(updateDoc(person, { status: 'archived' }));
+    await assertFails(updateDoc(doc(andrew(), 'people/andrew'), { color: '#87684d' }));
+    await assertFails(updateDoc(doc(karen(), 'households/blevins'), { adminUids: ['karen-uid'] }));
     await assertFails(updateDoc(person, { uid: 'andrew-uid' }));
     await assertFails(updateDoc(person, { status: 'deleted' }));
   });
@@ -196,7 +199,7 @@ describe('membership, privacy and account boundaries', () => {
     await assertFails(setDoc(doc(db, 'users/new'), { personId: 'andrew' }));
     await assertFails(updateDoc(doc(db, 'households/blevins'), { memberUids: ['attacker'] }));
     await assertFails(updateDoc(doc(db, 'people/andrew'), { uid: 'attacker' }));
-    await assertSucceeds(updateDoc(doc(db, 'people/karen'), { status: 'archived' }));
+    await assertFails(updateDoc(doc(db, 'people/karen'), { status: 'archived' }));
     await assertSucceeds(updateDoc(doc(db, 'users/andrew-uid'), { defaultContext: 'computer' }));
   });
   it('credentials and undeclared collections are always denied', async () => {
@@ -273,6 +276,45 @@ describe('item mutations and permanent log', () => {
         text: 'Not authorized',
       }),
     );
+  });
+  it('preserves large captures while bounding capture and ordinary note sizes', async () => {
+    const db = andrew();
+    for (const [length, allowed] of [
+      [50_000, true],
+      [50_001, false],
+    ] as const) {
+      const ref = doc(db, `items/paste-${length}`),
+        batch = writeBatch(db);
+      batch.set(ref, item({ status: 'inbox' }));
+      batch.set(doc(ref, 'log', 'capture'), {
+        at: createdAt,
+        by: 'andrew-uid',
+        kind: 'capture',
+        text: 'x'.repeat(length),
+      });
+      await (allowed ? assertSucceeds(batch.commit()) : assertFails(batch.commit()));
+    }
+    await assertFails(
+      setDoc(doc(db, 'items/private/log/oversize'), {
+        at: createdAt,
+        by: 'andrew-uid',
+        kind: 'note',
+        text: 'x'.repeat(4001),
+      }),
+    );
+  });
+  it('allows explicit removal of a step but rejects saving a blank step', async () => {
+    const ref = doc(andrew(), 'items/private'),
+      step = { id: 'delete-me', text: 'Unneeded step', done: false };
+    await assertSucceeds(updateDoc(ref, { steps: arrayUnion(step), version: increment(1) }));
+    await assertFails(
+      updateDoc(ref, {
+        steps: arrayUnion({ id: 'blank', text: '', done: false }),
+        version: increment(1),
+      }),
+    );
+    await assertSucceeds(updateDoc(ref, { steps: arrayRemove(step), version: increment(1) }));
+    expect((await getDoc(ref)).data()?.steps).toEqual([]);
   });
   it('edits array entries through atomic remove/add without rewriting the whole array', async () => {
     const db = andrew(),

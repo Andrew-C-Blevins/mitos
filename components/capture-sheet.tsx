@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { useSession } from './auth-provider';
 import { capture } from '@/lib/data/client/items';
+import { CAPTURE_LIMIT } from '@/lib/domain/input';
 export function CaptureSheet({
   open,
   onClose,
@@ -15,7 +16,7 @@ export function CaptureSheet({
   onError: (error: Error) => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
-    input = useRef<HTMLInputElement>(null),
+    input = useRef<HTMLTextAreaElement>(null),
     [text, setText] = useState('');
   const { viewer } = useSession();
   useEffect(() => {
@@ -52,18 +53,30 @@ export function CaptureSheet({
           }
         }}
       >
-        <input
+        <textarea
           ref={input}
           autoFocus
           aria-label="What’s on your mind?"
           placeholder="What’s on your mind?"
           value={text}
           onChange={(event) => setText(event.target.value)}
-          maxLength={500}
+          rows={5}
+          aria-describedby="capture-help"
           required
         />
-        <button className="primary-button" disabled={!text.trim()}>
-          Save
+        <p id="capture-help" className="secondary">
+          Paste an idea or a whole list. The full text is kept; the first line becomes the title.
+        </p>
+        {text.length > 4000 ? (
+          <p className="secondary" role="status">
+            {text.length.toLocaleString()} / {CAPTURE_LIMIT.toLocaleString()} characters
+          </p>
+        ) : null}
+        {text.length > CAPTURE_LIMIT ? (
+          <p role="alert">Split this into smaller captures to save all of it.</p>
+        ) : null}
+        <button className="primary-button" disabled={!text.trim() || text.length > CAPTURE_LIMIT}>
+          Save to Inbox
         </button>
       </form>
     </dialog>

@@ -23,7 +23,8 @@ export async function provisionUser(identity: DecodedIdToken) {
       !person.exists ||
       !household.exists ||
       !household.data()?.memberUids.includes(identity.uid) ||
-      person.data()?.uid !== identity.uid
+      person.data()?.uid !== identity.uid ||
+      person.data()?.status !== 'active'
     )
       throw new AuthError('This account has not been seeded into the household.', 403);
     if (!user.exists)

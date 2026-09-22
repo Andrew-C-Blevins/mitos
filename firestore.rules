@@ -75,7 +75,8 @@ service cloud.firestore {
     match /households/{householdId} { allow read: if member(householdId); allow write: if false; }
     match /people/{id} {
       allow read: if member(resource.data.householdId);
-      allow update: if member(resource.data.householdId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']) && request.resource.data.status in ['active', 'archived'];
+      // Household roles, unique colors and the final-admin guard are enforced in the authenticated people adapter.
+      allow update: if false;
       allow create, delete: if false;
     }
     match /users/{uid} {
@@ -105,7 +106,7 @@ service cloud.firestore {
           && request.resource.data.keys().hasOnly(['at', 'by', 'kind', 'text'])
           && request.resource.data.by == request.auth.uid && request.resource.data.at is timestamp
           && request.resource.data.kind in ['capture', 'note', 'status', 'migrated']
-          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 4000
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= (request.resource.data.kind == 'capture' ? 50000 : 4000)
           && (request.resource.data.kind != 'capture' || (entryId == 'capture' && !exists(/databases/$(database)/documents/items/$(id))));
         allow update, delete: if false;
       }

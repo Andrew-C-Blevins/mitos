@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ArrowUpRight, WandSparkles, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown } from 'lucide-react';
+import { saveError } from '@/lib/domain/input';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import {
   categories,
@@ -104,7 +105,7 @@ export function ItemScreen({ id }: { id: string }) {
     try {
       await action();
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not save.');
+      setError(saveError(caught));
     }
   }
   if (!loaded)
@@ -153,14 +154,6 @@ export function ItemScreen({ id }: { id: string }) {
         <ArrowLeft size={16} /> Everything
       </Link>
       <div className="item-actions">
-        <button disabled title="AI is deferred until M3">
-          <WandSparkles size={16} />
-          Shape
-        </button>
-        <button disabled title="Handoff is deferred until M4">
-          <ArrowUpRight size={16} />
-          Work on this
-        </button>
         <button
           onClick={() =>
             run(() =>
@@ -278,6 +271,7 @@ export function ItemScreen({ id }: { id: string }) {
                       value={need.text}
                       placeholder="Edit need"
                       onSave={(text) => editEntry(item.id, 'needs', need, { ...need, text })}
+                      onDelete={() => editEntry(item.id, 'needs', need)}
                     />
                   </div>
                   <div className="need-meta">
@@ -329,6 +323,7 @@ export function ItemScreen({ id }: { id: string }) {
                   <InlineText
                     value={question.text}
                     placeholder="Edit question"
+                    onDelete={() => editEntry(item.id, 'questions', question)}
                     onSave={(text) =>
                       editEntry(item.id, 'questions', question, { ...question, text })
                     }
@@ -352,6 +347,7 @@ export function ItemScreen({ id }: { id: string }) {
                   <InlineText
                     value={decision.text}
                     placeholder="Edit decision"
+                    onDelete={() => editEntry(item.id, 'decisions', decision)}
                     multiline
                     onSave={(text) =>
                       editEntry(item.id, 'decisions', decision, { ...decision, text })
@@ -381,6 +377,7 @@ export function ItemScreen({ id }: { id: string }) {
                     className={step.done ? 'done-text' : ''}
                     value={step.text}
                     placeholder="Edit step"
+                    onDelete={() => editEntry(item.id, 'steps', step)}
                     onSave={(text) => editEntry(item.id, 'steps', step, { ...step, text })}
                   />
                 </li>
@@ -390,47 +387,50 @@ export function ItemScreen({ id }: { id: string }) {
           </DocumentSection>
         ) : null}
       </div>
-      <DocumentSection title="Log">
+      <DocumentSection title="Notes & history">
         <InlineText
           placeholder="Add a note…"
           multiline
           onSave={(text) => addNote(item.id, text, viewer)}
         />
-        <ol className="log-list">
-          {[...new Map([...log, ...older].map((entry) => [entry.id, entry])).values()].map(
-            (entry) => (
-              <li key={entry.id}>
-                <div className="log-attribution">
-                  <time dateTime={entry.at}>{shortDate(entry.at.slice(0, 10))}</time>
-                  <span>
-                    {entry.kind === 'capture'
-                      ? 'Captured'
-                      : entry.kind === 'migrated'
-                        ? 'Imported'
-                        : (people.find((person) => person.uid === entry.by)?.name ??
-                          (entry.by === viewer.uid ? profile.name.split(' ')[0] : entry.by))}
-                  </span>
-                </div>
-                <p>{entry.text}</p>
-              </li>
-            ),
-          )}
-        </ol>
-        {hasOlder && cursor ? (
-          <button
-            className="text-action"
-            onClick={() =>
-              run(async () => {
-                const page = await olderLog(item.id, cursor);
-                setOlder((previous) => [...previous, ...page.rows]);
-                setCursor(page.cursor);
-                setHasOlder(page.rows.length === 20);
-              })
-            }
-          >
-            Show older
-          </button>
-        ) : null}
+        <details className="history-disclosure">
+          <summary>Show notes and original capture ({log.length + older.length})</summary>
+          <ol className="log-list">
+            {[...new Map([...log, ...older].map((entry) => [entry.id, entry])).values()].map(
+              (entry) => (
+                <li key={entry.id}>
+                  <div className="log-attribution">
+                    <time dateTime={entry.at}>{shortDate(entry.at.slice(0, 10))}</time>
+                    <span>
+                      {entry.kind === 'capture'
+                        ? 'Captured'
+                        : entry.kind === 'migrated'
+                          ? 'Imported'
+                          : (people.find((person) => person.uid === entry.by)?.name ??
+                            (entry.by === viewer.uid ? profile.name.split(' ')[0] : entry.by))}
+                    </span>
+                  </div>
+                  <p>{entry.text}</p>
+                </li>
+              ),
+            )}
+          </ol>
+          {hasOlder && cursor ? (
+            <button
+              className="text-action"
+              onClick={() =>
+                run(async () => {
+                  const page = await olderLog(item.id, cursor);
+                  setOlder((previous) => [...previous, ...page.rows]);
+                  setCursor(page.cursor);
+                  setHasOlder(page.rows.length === 20);
+                })
+              }
+            >
+              Show older
+            </button>
+          ) : null}
+        </details>
       </DocumentSection>
       {show('links') ? (
         <DocumentSection title="Links">

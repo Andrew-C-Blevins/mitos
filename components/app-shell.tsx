@@ -2,7 +2,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Plus, List, ArrowUpRight, CalendarDays, CheckCheck, LogOut, Settings } from 'lucide-react';
+import { Plus, List, LogOut, Settings } from 'lucide-react';
+import { SaveFeedback } from './save-feedback';
 import { logout, useSession } from './auth-provider';
 import { CaptureSheet } from './capture-sheet';
 import { PlannerWorkspace } from './planner-workspace';
@@ -39,8 +40,8 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="account">
           <span>{profile.name.split(' ')[0]}</span>
           <Link
-            href="/settings"
-            aria-label="Settings"
+            href={pathname === '/settings' ? '/' : '/settings'}
+            aria-label={pathname === '/settings' ? 'Close settings' : 'Settings'}
             aria-current={pathname === '/settings' ? 'page' : undefined}
           >
             <Settings size={17} />
@@ -55,7 +56,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
       {message ? (
         <div className="notice" role="status">
-          <span>{message}</span>
+          <SaveFeedback message={message} />
           <button onClick={() => setMessage('')} aria-label="Dismiss message">
             ×
           </button>
@@ -80,18 +81,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           <List size={16} />
           <span>Everything</span>
         </Link>
-        <button disabled title="After the design checkpoint">
-          <ArrowUpRight size={16} />
-          <span>Ready</span>
-        </button>
-        <button disabled title="After the design checkpoint">
-          <CalendarDays size={16} />
-          <span>Due</span>
-        </button>
-        <button disabled title="After the design checkpoint">
-          <CheckCheck size={16} />
-          <span>Review</span>
-        </button>
         <Link
           href="/settings"
           className={`desktop-settings ${pathname === '/settings' ? 'selected' : ''}`}

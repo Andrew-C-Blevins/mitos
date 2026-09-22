@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { saveError } from '@/lib/domain/input';
 export function InlineText({
   value,
   placeholder,
@@ -7,6 +8,8 @@ export function InlineText({
   multiline = false,
   className = '',
   label,
+  onDelete,
+  maxLength = multiline ? 4000 : 500,
 }: {
   value?: string;
   placeholder: string;
@@ -14,6 +17,8 @@ export function InlineText({
   multiline?: boolean;
   className?: string;
   label?: string;
+  onDelete?: () => Promise<unknown>;
+  maxLength?: number;
 }) {
   const [editing, setEditing] = useState(false),
     [draft, setDraft] = useState(value ?? ''),
@@ -40,11 +45,17 @@ export function InlineText({
         setError('');
         setBusy(true);
         try {
+          if (draft.length > maxLength)
+            throw new Error(
+              `Keep this entry within ${maxLength.toLocaleString()} characters. Put extra detail in a note.`,
+            );
+          if (onDelete && !draft.trim())
+            throw new Error('Enter text, or use Delete to remove this entry.');
           await onSave(draft.trim());
           setEditing(false);
           setDraft('');
         } catch (caught) {
-          setError(caught instanceof Error ? caught.message : 'Could not save.');
+          setError(saveError(caught));
         } finally {
           setBusy(false);
         }
@@ -55,7 +66,6 @@ export function InlineText({
           autoFocus
           aria-label={label ?? placeholder}
           value={draft}
-          maxLength={4000}
           onChange={(event) => setDraft(event.target.value)}
           rows={3}
         />
@@ -64,7 +74,6 @@ export function InlineText({
           autoFocus
           aria-label={label ?? placeholder}
           value={draft}
-          maxLength={500}
           onChange={(event) => setDraft(event.target.value)}
         />
       )}
@@ -72,10 +81,36 @@ export function InlineText({
         <button type="submit" disabled={busy}>
           {busy ? 'Saving…' : 'Save'}
         </button>
-        <button type="button" onClick={() => setEditing(false)}>
+        <button type="button" disabled={busy} onClick={() => setEditing(false)}>
           Cancel
         </button>
+        {onDelete ? (
+          <button
+            type="button"
+            className="delete-entry"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              setError('');
+              try {
+                await onDelete();
+                setEditing(false);
+              } catch (caught) {
+                setError(saveError(caught));
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Delete
+          </button>
+        ) : null}
       </div>
+      {draft.length > maxLength * 0.8 ? (
+        <p className="secondary">
+          {draft.length.toLocaleString()} / {maxLength.toLocaleString()} characters
+        </p>
+      ) : null}
       {error ? <p role="alert">{error}</p> : null}
     </form>
   );

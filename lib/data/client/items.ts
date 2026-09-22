@@ -103,7 +103,7 @@ export function capture(text: string, viewer: Viewer, onError: (error: Error) =>
     at: Timestamp.fromDate(new Date(now)),
     by: viewer.uid,
     kind: 'capture',
-    text: text.trim(),
+    text,
   });
   // Firestore queues offline and emits the optimistic snapshot immediately.
   // Do not await server acknowledgement to dismiss the capture sheet.

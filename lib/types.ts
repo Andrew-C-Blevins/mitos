@@ -139,6 +139,7 @@ export interface Household {
   id: string;
   name: string;
   memberUids: string[];
+  adminUids?: string[];
   createdAt: string;
 }
 export interface Person {

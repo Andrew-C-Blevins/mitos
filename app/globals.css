@@ -401,7 +401,10 @@ h1,
 }
 .category-mark {
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: 0.62rem;
+  max-width: 5.5rem;
+  text-align: right;
+  line-height: 1.25;
 }
 .owner-dot {
   display: inline-block;
@@ -411,35 +414,18 @@ h1,
   flex-shrink: 0;
 }
 .row-menu {
-  width: 29px;
-  flex: 0 0 29px;
+  width: 44px;
+  flex: 0 0 44px;
   height: 48px;
   display: grid;
   place-items: center;
   color: var(--muted);
 }
-.drag-handle {
-  width: 18px;
-  flex: 0 0 18px;
-  height: 48px;
-  color: var(--ring);
-  cursor: grab;
-  touch-action: none;
-}
-.drag-handle:focus-visible,
-.drag-handle:hover,
-.drag-active .drag-handle {
-  color: var(--ink);
-}
-.drag-active {
-  outline: 1px solid var(--accent);
-  outline-offset: -1px;
-}
 .swipe-action {
   position: absolute;
   inset: 0;
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   padding: 0 18px;
   background: var(--ink);
@@ -451,8 +437,8 @@ h1,
   gap: 5px;
   align-items: center;
 }
-.swipe-action span:last-child {
-  margin-left: auto;
+.swipe-action[data-side='right'] {
+  justify-content: flex-end;
 }
 .nested .ledger-row {
   padding-left: 32px;
@@ -512,11 +498,18 @@ summary::-webkit-details-marker {
   gap: 24px;
   padding-top: 10px;
   font-size: 0.78rem;
+  align-items: center;
+  flex-wrap: nowrap;
 }
 .inbox-row > div button,
 .inbox-row > div a {
   color: var(--muted);
   min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  white-space: nowrap;
 }
 .inbox-prompt {
   display: flex;
@@ -666,6 +659,143 @@ summary::-webkit-details-marker {
   font-size: 2rem;
   font-weight: 400;
   margin-bottom: 36px;
+}
+.settings-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.settings-heading h1 {
+  margin-bottom: 0;
+}
+.settings-heading a {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+}
+.settings-page > .secondary {
+  margin: 12px 0;
+}
+.settings-feedback {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--surface);
+}
+.save-feedback {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 0.85rem;
+  color: var(--accent);
+}
+.save-feedback.error {
+  color: var(--red);
+}
+.notice .save-feedback {
+  padding: 0;
+}
+.settings-done {
+  display: block;
+  margin-top: 20px;
+}
+.person-controls {
+  flex: 0 1 130px;
+  font-size: 0.8rem;
+}
+.person-controls summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.person-controls label {
+  display: grid;
+  gap: 6px;
+}
+.person-controls select {
+  max-width: 100%;
+}
+.archived-people {
+  margin-top: 24px;
+}
+.archived-people summary,
+.history-disclosure summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 12px 0;
+}
+.color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 20px;
+  border: 0;
+  padding: 0;
+}
+.color-picker legend {
+  margin-bottom: 10px;
+  font-size: 0.85rem;
+}
+.color-choice {
+  display: grid;
+  place-items: center;
+  gap: 5px;
+  min-width: 64px;
+  min-height: 64px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  padding: 8px;
+}
+.color-choice span {
+  background: var(--swatch);
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--ink);
+}
+.color-choice[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--selected);
+}
+.color-choice:disabled span {
+  opacity: 0.4;
+}
+.move-controls {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.move-controls label {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.move-controls select {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+}
+.move-controls button {
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+.delete-entry {
+  color: var(--red);
+  margin-left: auto;
+}
+.history-disclosure .log-list p {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.capture-sheet textarea {
+  width: 100%;
+  resize: vertical;
+  min-height: 130px;
+  max-height: 45dvh;
 }
 .settings-section {
   margin-bottom: 36px;

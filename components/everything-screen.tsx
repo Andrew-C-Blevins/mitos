@@ -2,17 +2,10 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import {
-  Check,
-  ChevronDown,
-  ChevronRight,
-  GripVertical,
-  MoreHorizontal,
-  Inbox,
-  X,
-} from 'lucide-react';
-import { generateKeyBetween } from 'fractional-indexing';
-import { categories, categoryLabels, categoryMarks, type Item, type Person } from '@/lib/types';
+import { Check, ChevronDown, ChevronRight, MoreHorizontal, Inbox, X } from 'lucide-react';
+import { categories, categoryLabels, type Item, type Person } from '@/lib/types';
+import { movedSortKey } from '@/lib/domain/ordering';
+import { saveError } from '@/lib/domain/input';
 import { subscribeItems, updateFields, complete } from '@/lib/data/client/items';
 import { subscribePeople } from '@/lib/data/client/people';
 import { isSnoozed, dateMark, localDate, addDays } from '@/lib/domain/rules';
@@ -34,8 +27,7 @@ export function EverythingScreen() {
     [sort, setSort] = useState<Sort>('manual'),
     [quick, setQuick] = useState<Item | null>(null),
     [collapsed, setCollapsed] = useState<Set<string>>(new Set()),
-    [inboxOpen, setInboxOpen] = useState(false),
-    [dragging, setDragging] = useState<string | null>(null);
+    [inboxOpen, setInboxOpen] = useState(false);
   useEffect(
     () =>
       subscribeItems(
@@ -84,9 +76,7 @@ export function EverythingScreen() {
     snoozed = sorted.filter((item) => isSnoozed(item, today));
   function run(action: () => Promise<unknown>) {
     setError('');
-    void action().catch((caught) =>
-      setError(caught instanceof Error ? caught.message : 'Could not save.'),
-    );
+    void action().catch((caught) => setError(saveError(caught)));
   }
   function snooze(item: Item, date = addDays(today, 7)) {
     run(() => updateFields(item, { snoozeUntil: date }, viewer, `Snoozed until ${date}.`));
@@ -98,25 +88,6 @@ export function EverythingScreen() {
       else next.add(id);
       return next;
     });
-  }
-  function reorder(id: string, beforeId: string) {
-    if (id === beforeId || sort !== 'manual') return;
-    const item = items.find((item) => item.id === id),
-      before = items.find((item) => item.id === beforeId);
-    if (!item || !before || item.parentId !== before.parentId) return;
-    const siblings = items
-      .filter(
-        (other) => other.id !== id && other.parentId === item.parentId && other.status === 'active',
-      )
-      .sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0));
-    const index = siblings.findIndex((other) => other.id === beforeId);
-    run(() =>
-      updateFields(
-        item,
-        { sortKey: generateKeyBetween(siblings[index - 1]?.sortKey ?? null, before.sortKey) },
-        viewer,
-      ),
-    );
   }
   function renderRows(source: Item[], nested = false): React.ReactNode {
     const roots = source.filter(
@@ -139,13 +110,6 @@ export function EverythingScreen() {
             onComplete={() => run(() => complete(item, viewer))}
             onSnooze={() => snooze(item)}
             onQuick={() => setQuick(item)}
-            draggable={sort === 'manual' && !nested}
-            onDragStart={() => setDragging(item.id)}
-            onDrop={() => {
-              if (dragging) reorder(dragging, item.id);
-              setDragging(null);
-            }}
-            onTouchDrop={(target) => reorder(item.id, target)}
           />
           {hasChildren && !collapsed.has(item.id)
             ? children.map((child) => (
@@ -162,10 +126,6 @@ export function EverythingScreen() {
                   onComplete={() => run(() => complete(child, viewer))}
                   onSnooze={() => snooze(child)}
                   onQuick={() => setQuick(child)}
-                  draggable={false}
-                  onDragStart={() => {}}
-                  onDrop={() => {}}
-                  onTouchDrop={() => {}}
                 />
               ))
             : null}
@@ -329,18 +289,22 @@ export function EverythingScreen() {
           people={people}
           onClose={() => setQuick(null)}
           onSnooze={(date) => snooze(quick, date)}
-          onMoveTop={() => {
-            const first = items
-              .filter((item) => !item.parentId && item.id !== quick.id)
-              .sort((a, b) => (a.sortKey < b.sortKey ? -1 : 1))[0];
-            run(() =>
-              updateFields(
-                quick,
-                { sortKey: generateKeyBetween(null, first?.sortKey ?? null) },
-                viewer,
-              ),
+          siblings={items
+            .filter(
+              (item) =>
+                item.id !== quick.id &&
+                item.status === 'active' &&
+                item.parentId === quick.parentId,
+            )
+            .sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0))}
+          onMove={async (destination) => {
+            const current = items.find((item) => item.id === quick.id) ?? quick;
+            await updateFields(
+              current,
+              { sortKey: movedSortKey(items, current, destination) },
+              viewer,
             );
-            setQuick(null);
+            setSort('manual');
           }}
         />
       ) : null}
@@ -360,16 +324,11 @@ interface RowProps {
   onComplete: () => void;
   onSnooze: () => void;
   onQuick: () => void;
-  draggable: boolean;
-  onDragStart: () => void;
-  onDrop: () => void;
-  onTouchDrop: (id: string) => void;
 }
 function ItemRow(props: RowProps) {
   const { item, people, me, today } = props;
   const selected = usePathname() === `/items/${item.id}`;
-  const [offset, setOffset] = useState(0),
-    [dragActive, setDragActive] = useState(false);
+  const [offset, setOffset] = useState(0);
   const gesture = useRef<{
     x: number;
     y: number;
@@ -397,18 +356,11 @@ function ItemRow(props: RowProps) {
     .join(' · ');
   return (
     <div
-      className={`row-container ${props.nested ? 'nested' : ''} ${dragActive ? 'drag-active' : ''}`}
+      className={`row-container ${props.nested ? 'nested' : ''}`}
       data-item-id={item.id}
       data-selected={selected || undefined}
-      onDragOver={(event) => {
-        if (props.draggable) event.preventDefault();
-      }}
-      onDrop={(event) => {
-        event.preventDefault();
-        props.onDrop();
-      }}
     >
-      <div className="swipe-action" aria-hidden="true">
+      <div className="swipe-action" data-side={offset > 0 ? 'left' : 'right'} aria-hidden="true">
         {offset > 0 ? (
           <span>
             <Check size={16} />
@@ -422,7 +374,7 @@ function ItemRow(props: RowProps) {
         className="ledger-row"
         style={{ transform: offset ? `translateX(${offset}px)` : undefined }}
         onPointerDown={(event) => {
-          if ((event.target as HTMLElement).closest('button, input')) return;
+          if ((event.target as HTMLElement).closest('button, input, .row-marks')) return;
           gesture.current = { x: event.clientX, y: event.clientY, moved: false, menu: false };
           gesture.current.timer = setTimeout(() => {
             if (gesture.current && !gesture.current.moved) {
@@ -497,7 +449,9 @@ function ItemRow(props: RowProps) {
           ) : null}
         </Link>
         <div className="row-marks">
-          <span className="mono category-mark">{categoryMarks[item.category]}</span>
+          <span className="category-mark" aria-label={`Category: ${categoryLabels[item.category]}`}>
+            {categoryLabels[item.category]}
+          </span>
           {owners.slice(0, 2).map((person) => (
             <span
               key={person.id}
@@ -514,31 +468,6 @@ function ItemRow(props: RowProps) {
         >
           <MoreHorizontal size={16} />
         </button>
-        {props.draggable ? (
-          <button
-            className="drag-handle"
-            aria-label={`Reorder ${item.title}`}
-            draggable
-            onDragStart={props.onDragStart}
-            onPointerDown={(event) => {
-              if (event.pointerType === 'mouse') return;
-              event.currentTarget.setPointerCapture(event.pointerId);
-              setDragActive(true);
-            }}
-            onPointerUp={(event) => {
-              if (!dragActive) return;
-              const target = document
-                .elementFromPoint(event.clientX, event.clientY)
-                ?.closest('[data-item-id]')
-                ?.getAttribute('data-item-id');
-              if (target) props.onTouchDrop(target);
-              setDragActive(false);
-            }}
-            onPointerCancel={() => setDragActive(false)}
-          >
-            <GripVertical size={13} />
-          </button>
-        ) : null}
       </div>
     </div>
   );
@@ -548,25 +477,33 @@ function QuickMenu({
   people,
   onClose,
   onSnooze,
-  onMoveTop,
+  onMove,
+  siblings,
 }: {
   item: Item;
   people: Person[];
   onClose: () => void;
   onSnooze: (date?: string) => void;
-  onMoveTop: () => void;
+  onMove: (destination: string) => Promise<void>;
+  siblings: Item[];
 }) {
   const dialog = useRef<HTMLDialogElement>(null),
-    [error, setError] = useState('');
+    [error, setError] = useState(''),
+    [moving, setMoving] = useState(false),
+    [destination, setDestination] = useState(''),
+    [message, setMessage] = useState('');
   const { viewer } = useSession();
   useEffect(() => {
     dialog.current?.showModal();
   }, []);
   async function save(fields: Parameters<typeof updateFields>[1]) {
+    setError('');
+    setMessage('');
     try {
       await updateFields(item, fields, viewer);
+      setMessage('Saved.');
     } catch (error) {
-      setError((error as Error).message);
+      setError(saveError(error));
     }
   }
   return (
@@ -640,7 +577,48 @@ function QuickMenu({
           onChange={(event) => save({ targetDate: event.target.value || null })}
         />
       </label>
-      <button onClick={onMoveTop}>Move to top</button>
+      <form
+        className="move-controls"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          setMoving(true);
+          setError('');
+          setMessage('');
+          try {
+            await onMove(destination);
+            setMessage('Moved. The list is now in manual order.');
+          } catch (caught) {
+            setError(caught instanceof Error ? caught.message : 'Could not move item.');
+          } finally {
+            setMoving(false);
+          }
+        }}
+      >
+        <label>
+          Move in list
+          <select
+            aria-label="Move position"
+            value={destination}
+            onChange={(event) => setDestination(event.target.value)}
+            required
+          >
+            <option value="">Choose a position…</option>
+            {siblings.map((sibling, index) => (
+              <option key={sibling.id} value={sibling.id}>
+                {index === 0 ? 'Top — before ' : 'Before '}
+                {sibling.title}
+              </option>
+            ))}
+            <option value="end">Bottom</option>
+          </select>
+        </label>
+        <button disabled={moving || !destination}>{moving ? 'Moving…' : 'Move'}</button>
+      </form>
+      {message ? (
+        <p className="save-feedback" role="status">
+          {message}
+        </p>
+      ) : null}
       <button onClick={onClose}>Done</button>
       {error ? <p role="alert">{error}</p> : null}
     </dialog>
