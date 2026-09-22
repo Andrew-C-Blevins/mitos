@@ -46,3 +46,10 @@ inline editing and capture were checked. Dark mode follows the browser's system
 preference; light mode was checked through an ignored localhost CSS proxy, without
 adding a theme override to the app. The temporary fixture and proxy are removed
 after review. Application data and authentication logic are unchanged.
+
+Published source: 548a850, pushed to main; GitHub CI run 35680033480 passed.
+The updated Vercel preview is Ready and serves HTTP 200, but authorizing its new
+hostname for Google sign-in was blocked by automatic approval review. The new
+preview is not a usable replacement for the previous signed-in preview until
+that exact hostname is approved. See CLAUDE.md for deployment addresses and the
+remaining production/custom-domain approval.

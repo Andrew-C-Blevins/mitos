@@ -35,11 +35,16 @@ Firestore in us-east4, deployed rules/indexes and the reviewed 39-item seed.
 Vercel is connected to GitHub. The preview runtime uses a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
-Verified preview: https://mitos-k7rdd9us8-andrew-c-blevins-projects.vercel.app
-(deployment dpl_2PJmTejWbLexFvpxuWgbumg2pMQS, app source matches 5655d0c). Vercel reports
-Preview/Ready; HTTP home 200, unauthenticated POST /api/session 401. The exact
-hostname is authorized for Firebase Google sign-in. Deployment protection remains
-enabled. CI, cloud runtime credential reads and production dependency audit pass.
+Latest design preview: https://mitos-k5rp6nh37-andrew-c-blevins-projects.vercel.app
+(deployment dpl_HFNkJHtSgvecqACw9C6XDPYJVK8R, app source 548a850). Vercel reports
+Preview/Ready; HTTP home 200, unauthenticated POST /api/session 401. GitHub CI passed
+for 548a850 (run 35680033480). The new hostname is NOT yet authorized for Google
+sign-in: automatic approval review rejected that Firebase allowlist expansion,
+requiring explicit approval for the exact new hostname. Do not retry or work
+around that block without approval. The previous working preview remains
+https://mitos-k7rdd9us8-andrew-c-blevins-projects.vercel.app (old design).
+Deployment protection remains enabled. Cloud runtime credential reads and the
+production dependency audit passed at the preceding checkpoint.
 .firebaserc defaults to demo-mitos; cloud is an explicit separate alias.
 .env.local remains local-only; .env.cloud.local holds ignored operator config.
 Cloud env is preview-scoped; production is not configured. vercel.json disables
