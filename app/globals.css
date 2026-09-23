@@ -1379,3 +1379,60 @@ summary::-webkit-details-marker {
 .date-shortcuts button {
   min-height: 44px;
 }
+
+.save-toast-region {
+  position: fixed;
+  z-index: 20;
+  inset-inline: 16px;
+  bottom: calc(151px + env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+.save-toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(440px, calc(100vw - 32px));
+  min-height: 52px;
+  padding: 4px 4px 4px 18px;
+  border: 1px solid var(--thread);
+  border-radius: 18px;
+  color: var(--ink);
+  background: var(--surface);
+  box-shadow: 0 6px 24px #0003;
+  font-size: 0.85rem;
+  pointer-events: auto;
+}
+.save-toast-check {
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.save-toast button {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  color: var(--muted);
+  border-radius: 12px;
+}
+@media (min-width: 1200px) {
+  .save-toast-region {
+    bottom: 28px;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .save-toast {
+    animation: save-toast-appear 160ms ease-out;
+  }
+  @keyframes save-toast-appear {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}

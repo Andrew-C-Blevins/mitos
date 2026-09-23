@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { saveError } from '@/lib/domain/input';
+import { useSaveToast } from './save-toast';
 export function InlineText({
   value,
   placeholder,
@@ -20,6 +21,7 @@ export function InlineText({
   onDelete?: () => Promise<unknown>;
   maxLength?: number;
 }) {
+  const toast = useSaveToast();
   const [editing, setEditing] = useState(false),
     [draft, setDraft] = useState(value ?? ''),
     [error, setError] = useState(''),
@@ -44,6 +46,7 @@ export function InlineText({
         event.preventDefault();
         setError('');
         setBusy(true);
+        toast.clear();
         try {
           if (draft.length > maxLength)
             throw new Error(
@@ -52,6 +55,7 @@ export function InlineText({
           if (onDelete && !draft.trim())
             throw new Error('Enter text, or use Delete to remove this entry.');
           await onSave(draft.trim());
+          toast.saved();
           setEditing(false);
           setDraft('');
         } catch (caught) {
@@ -92,8 +96,10 @@ export function InlineText({
             onClick={async () => {
               setBusy(true);
               setError('');
+              toast.clear();
               try {
                 await onDelete();
+                toast.saved();
                 setEditing(false);
               } catch (caught) {
                 setError(saveError(caught));

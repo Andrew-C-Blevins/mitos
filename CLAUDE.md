@@ -2,6 +2,11 @@
 
 ## Status and stop boundary
 
+Item save-feedback refinement replaces the inline Saved label beside Snooze with
+a shared seven-second bottom toast for all Item save paths. Errors keep their
+existing messages and history reads do not trigger success. See docs/save-feedback.md
+for verification and release status. Capture/Settings feedback is unchanged.
+
 September 22 unified controls and drag reordering are live from app commit
 a9f2a09. Dates, snoozing, visibility and assignment are on Item; the ellipsis/
 long-press modal and Move dropdown are removed. Sorting uses the reusable

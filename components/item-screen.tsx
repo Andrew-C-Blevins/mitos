@@ -31,6 +31,7 @@ import { subscribePeople } from '@/lib/data/client/people';
 import { useSession } from './auth-provider';
 import { InlineText } from './inline-text';
 import { DeleteItemDialog } from './delete-item-dialog';
+import { useSaveToast } from './save-toast';
 import { shortDate, dateMark, localDate, addDays } from '@/lib/domain/rules';
 import { newId } from '@/lib/domain/ids';
 
@@ -54,6 +55,7 @@ type OptionalSection = 'intent' | 'nextAction' | Section;
 export function ItemScreen({ id }: { id: string }) {
   const router = useRouter();
   const { viewer, profile } = useSession();
+  const toast = useSaveToast();
   const logInitialized = useRef(false);
   const confirmedVersion = useRef(0);
   const [item, setItem] = useState<Item | null>(null),
@@ -64,7 +66,6 @@ export function ItemScreen({ id }: { id: string }) {
     [cursor, setCursor] = useState<QueryDocumentSnapshot>(),
     [hasOlder, setHasOlder] = useState(false),
     [error, setError] = useState(''),
-    [saved, setSaved] = useState(''),
     [revealed, setRevealed] = useState<OptionalSection | ''>(''),
     [deleting, setDeleting] = useState<Item | null>(null);
   useEffect(
@@ -109,12 +110,12 @@ export function ItemScreen({ id }: { id: string }) {
       ),
     [id],
   );
-  async function run(action: () => Promise<unknown>) {
+  async function run(action: () => Promise<unknown>, isSave = true) {
     setError('');
-    setSaved('');
+    if (isSave) toast.clear();
     try {
       await action();
-      setSaved('Saved.');
+      if (isSave) toast.saved();
     } catch (caught) {
       setError(saveError(caught));
     }
@@ -331,9 +332,6 @@ export function ItemScreen({ id }: { id: string }) {
                 Unsnooze
               </button>
             ) : null}
-            <span className="save-feedback" role="status">
-              {saved}
-            </span>
           </div>
         </DocumentSection>
         {show('needs') ? (
@@ -508,7 +506,7 @@ export function ItemScreen({ id }: { id: string }) {
                   setOlder((previous) => [...previous, ...page.rows]);
                   setCursor(page.cursor);
                   setHasOlder(page.rows.length === 20);
-                })
+                }, false)
               }
             >
               Show older
@@ -687,6 +685,7 @@ export function ItemScreen({ id }: { id: string }) {
   );
 }
 function AddLink({ item }: { item: Item }) {
+  const toast = useSaveToast();
   const [open, setOpen] = useState(false),
     [error, setError] = useState('');
   if (!open)
@@ -701,6 +700,7 @@ function AddLink({ item }: { item: Item }) {
       onSubmit={async (event) => {
         event.preventDefault();
         const data = new FormData(event.currentTarget);
+        toast.clear();
         try {
           const url = String(data.get('url'));
           await addEntry(item, 'links', {
@@ -709,6 +709,7 @@ function AddLink({ item }: { item: Item }) {
             label: String(data.get('label')) || new URL(url).hostname,
             kind: String(data.get('kind')) as 'chat' | 'reference' | 'hearth',
           });
+          toast.saved();
           setOpen(false);
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not save link.');
@@ -746,6 +747,7 @@ function RecurrenceEditor({
   item: Item;
   save: (recurrence: Item['recurrence'] | null) => Promise<unknown>;
 }) {
+  const toast = useSaveToast();
   const [open, setOpen] = useState(false),
     [error, setError] = useState('');
   if (!open)
@@ -767,6 +769,7 @@ function RecurrenceEditor({
           kind = String(data.get('kind'));
         const start = String(data.get('start')),
           end = String(data.get('end'));
+        toast.clear();
         try {
           if (Boolean(start) !== Boolean(end)) throw new Error('Set both season dates.');
           const season = start && end ? { start, end } : undefined;
@@ -777,6 +780,7 @@ function RecurrenceEditor({
                 ? { kind, rule: String(data.get('rule')), season }
                 : { kind: 'afterCompletion', intervalDays: Number(data.get('interval')), season },
           );
+          toast.saved();
           setOpen(false);
         } catch (caught) {
           setError(caught instanceof Error ? caught.message : 'Could not save recurrence.');

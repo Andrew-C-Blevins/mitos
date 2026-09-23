@@ -81,6 +81,8 @@ an existing Inbox item to Everything; no model call or duplicate item is created
 Dates, snoozing, visibility and assignment are directly on Item. The duplicate
 ellipsis modal is removed. See the [reusable sortable component](components/ui/sortable-list/README.md)
 and [release notes](docs/reordering-follow-up.md).
+Successful Item edits show a dismissible “Changes saved” toast near the bottom
+for seven seconds, independent of the field being edited.
 
 Delete a to-do from the Delete button at the bottom of its page or from Inbox.
 The confirmation names the item and warns that deletion removes
