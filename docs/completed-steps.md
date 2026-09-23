@@ -41,3 +41,18 @@ No dependency, schema, rules, cloud configuration or AI changes.
   retained their original order. Browser console had no errors.
 - The live repair's exact comparison confirmed only step order and the record
   version changed. Actual iPhone Safari remains a physical-device check.
+
+## Release
+
+- App commit `ed9d8699f255d5bda6118935c53a6483eab5049e`, pushed to main.
+- [GitHub CI 35899089316](https://github.com/Andrew-C-Blevins/mitos/actions/runs/35899089316)
+  passed, including coverage, emulator security/integration tests and build.
+- Production `dpl_DQjXNRwDSA272j6QTdVQS2Chtac7` is Ready, with
+  [mitos.twelvedegrees.studio](https://mitos.twelvedegrees.studio) assigned.
+- The live domain serves the new disclosure controls; unauthenticated item reads
+  remain protected. Deployment error-log scan returned no entries.
+- Read-back confirmed the repaired order and preserved completion flags. Adding
+  an unfinished step after all original steps were complete also passed in the
+  local browser. Desktop layout reviewed at 1440px.
+- Local test fixtures removed, test server/emulators stopped, ports released,
+  temporary browser tab closed and viewport reset. No ongoing monitor created.

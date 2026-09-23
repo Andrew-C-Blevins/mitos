@@ -2,12 +2,14 @@
 
 ## Status and stop boundary
 
-Completed-step follow-up: each completed step is a one-line disclosure in place;
+Completed-step follow-up is live from app commit ed9d869: each completed step is a one-line disclosure in place;
 the consecutive completed prefix shares an expandable count. Reopening a step
 recalculates the prefix and first unfinished preview immediately. No length threshold,
 new Next action field or AI call. See docs/completed-steps.md for behavior and release
 verification. The approved narrow import-order repair preserved all current content
 and completion flags; its source, script and backup remain in ignored local paths.
+CI 35899089316 passed; production dpl_DQjXNRwDSA272j6QTdVQS2Chtac7 is Ready
+at mitos.twelvedegrees.studio. Live bundle and repaired order were verified.
 
 September 23 steps-first follow-up is live from app commit 141e827.
 See docs/steps-first-follow-up.md for validation and deployment receipt.
