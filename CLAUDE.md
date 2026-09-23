@@ -2,10 +2,10 @@
 
 ## Status and stop boundary
 
-Item save-feedback refinement replaces the inline Saved label beside Snooze with
-a shared seven-second bottom toast for all Item save paths. Errors keep their
-existing messages and history reads do not trigger success. See docs/save-feedback.md
-for verification and release status. Capture/Settings feedback is unchanged.
+Item save feedback is live from app commit ec9d74d: the inline Saved label beside
+Snooze is replaced by a shared seven-second bottom toast for all Item save paths.
+Errors keep their existing messages and history reads do not trigger success.
+See docs/save-feedback.md for verification. Capture/Settings feedback is unchanged.
 
 September 22 unified controls and drag reordering are live from app commit
 a9f2a09. Dates, snoozing, visibility and assignment are on Item; the ellipsis/
@@ -71,7 +71,7 @@ Vercel is connected to GitHub. Production and preview use a Mitos-only service
 account with roles/datastore.user and roles/firebaseauth.viewer. Its private key
 is stored in ignored operator files and sensitive FIREBASE_SERVICE_ACCOUNT_JSON.
 Production: https://mitos.twelvedegrees.studio
-(deployment dpl_3Rqj7XQZW4DUmNyQ7Xwycc1mwQuS, app source a9f2a09).
+(deployment dpl_GcJdpEperXvx5DUomc6LnePPoYDX, app source ec9d74d).
 Vercel reports Production/Ready. Ten production variables are configured;
 the runtime credential and account allowlist variables are sensitive. Production
 uses the existing Firebase data; no reseed or schema change occurred at launch.

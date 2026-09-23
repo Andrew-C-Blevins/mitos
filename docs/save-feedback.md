@@ -26,4 +26,12 @@ No dependency, schema, rules, account or environment changes.
 - Boundary/runtime checks, lint, typecheck, all 44 unit/domain/route tests and
   the production build passed. Local test data was removed and services stopped.
 
-Release status: local verification complete; awaiting production deployment.
+## Live release
+
+App commit **ec9d74d2f35a0389ae3825fd4f3a828af6374237** is committed and pushed.
+Vercel deployment **dpl_GcJdpEperXvx5DUomc6LnePPoYDX** is Production/Ready and
+aliased to https://mitos.twelvedegrees.studio. Custom-domain HTML/assets and the
+published toast bundle passed verification; session/export remain protected.
+The bounded production error-log scan returned no entries.
+[GitHub CI passed](https://github.com/Andrew-C-Blevins/mitos/actions/runs/35802194316),
+including coverage, all 26 emulator integration tests, and the production build.
