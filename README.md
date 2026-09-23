@@ -83,6 +83,10 @@ summary opens People & timing, containing assignment, visibility and dates.
 There is no separate Next action editor: the list previews the first unfinished
 step without AI calls. Unique former Next action text stays in a collapsed
 reference note. Checking every step offers completion without doing it automatically.
+Completed steps stay in order and shrink to one expandable line. The consecutive
+completed steps at the beginning share an expandable count; reopening an earlier
+step immediately makes it the first unfinished step again. This applies to every
+checklist, without a size threshold. See [completed steps](docs/completed-steps.md).
 The redundant one-tab navigation is removed. Back to list and Done both preserve
 list filters and scroll position. Capture and other sheets lock background scrolling.
 See [the follow-up](docs/steps-first-follow-up.md) and the

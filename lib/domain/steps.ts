@@ -1,5 +1,10 @@
 import type { Item } from '@/lib/types';
 
+export function completedPrefixLength(steps: Item['steps']): number {
+  const firstUnchecked = steps.findIndex((step) => !step.done);
+  return firstUnchecked === -1 ? steps.length : firstUnchecked;
+}
+
 export function stepPreview(item: Pick<Item, 'steps'>): string | undefined {
   return (
     item.steps.find((step) => !step.done)?.text ??

@@ -2,6 +2,13 @@
 
 ## Status and stop boundary
 
+Completed-step follow-up: each completed step is a one-line disclosure in place;
+the consecutive completed prefix shares an expandable count. Reopening a step
+recalculates the prefix and first unfinished preview immediately. No length threshold,
+new Next action field or AI call. See docs/completed-steps.md for behavior and release
+verification. The approved narrow import-order repair preserved all current content
+and completion flags; its source, script and backup remain in ignored local paths.
+
 September 23 steps-first follow-up is live from app commit 141e827.
 See docs/steps-first-follow-up.md for validation and deployment receipt.
 The UI is now To-dos, with no redundant bottom/side navigation. Item leads with

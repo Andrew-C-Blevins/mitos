@@ -1104,6 +1104,62 @@ summary::-webkit-details-marker {
   text-decoration: line-through;
   color: var(--muted);
 }
+.step-list > li {
+  margin-top: 0;
+}
+.step-list > li[hidden] {
+  display: none;
+}
+.step-list > li:not([hidden]) ~ li:not([hidden]) {
+  margin-top: 10px;
+}
+.completed-steps-toggle,
+.completed-step summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  width: 100%;
+  text-align: left;
+  color: var(--muted);
+}
+.completed-steps-toggle {
+  font-size: 0.85rem;
+}
+.completed-steps-toggle[aria-expanded='true'] > svg,
+.completed-step[open] > summary > svg {
+  transform: rotate(90deg);
+}
+.completed-step {
+  min-width: 0;
+  flex: 1;
+}
+.completed-step summary {
+  cursor: pointer;
+  list-style: none;
+}
+.completed-step summary::-webkit-details-marker {
+  display: none;
+}
+.completed-step summary > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.completed-step summary > svg {
+  flex-shrink: 0;
+}
+.completed-step[open] > .inline-text {
+  width: 100%;
+}
+.step-list .check-row:has(.completed-step[open]) {
+  align-items: flex-start;
+}
+.step-list .check-row:has(.completed-step[open]) > input {
+  margin-top: 13px;
+}
 .log-list {
   margin-top: 14px;
 }

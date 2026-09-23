@@ -1,7 +1,34 @@
 import { expect, it } from 'vitest';
-import { stepPreview, previousAction } from '@/lib/domain/steps';
+import { stepPreview, previousAction, completedPrefixLength } from '@/lib/domain/steps';
 import { itemHref } from '@/lib/domain/item-links';
 import { item } from './fixtures';
+
+it('collapses only the completed prefix, including out-of-order completions as work catches up', () => {
+  const steps = Array.from({ length: 20 }, (_, index) => ({
+    id: String(index),
+    text: `Step ${index + 1}`,
+    done: index < 6 || index === 7,
+  }));
+  const order = steps.map((step) => step.id);
+  expect(completedPrefixLength(steps)).toBe(6);
+  steps[6].done = true;
+  expect(completedPrefixLength(steps)).toBe(8);
+  expect(stepPreview({ steps })).toBe('Step 9');
+  steps[1].done = false;
+  expect(completedPrefixLength(steps)).toBe(1);
+  expect(stepPreview({ steps })).toBe('Step 2');
+  expect(steps.map((step) => step.id)).toEqual(order);
+});
+it('handles empty, all completed and newly extended checklists without a size threshold', () => {
+  expect(completedPrefixLength([])).toBe(0);
+  const steps = [{ id: 'a', text: 'First', done: true }];
+  expect(completedPrefixLength(steps)).toBe(1);
+  steps.push({ id: 'b', text: 'Second', done: false });
+  expect(completedPrefixLength(steps)).toBe(1);
+  steps[0].done = false;
+  steps[1].done = true;
+  expect(completedPrefixLength(steps)).toBe(0);
+});
 
 it('derives the first unfinished step, respects order and never uses stale instructions', () => {
   const task = item({

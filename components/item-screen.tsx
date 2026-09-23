@@ -29,6 +29,7 @@ import {
 import { subscribePeople } from '@/lib/data/client/people';
 import { useSession } from './auth-provider';
 import { InlineText } from './inline-text';
+import { StepChecklist } from './step-checklist';
 import { DeleteItemDialog } from './delete-item-dialog';
 import { useSaveToast } from './save-toast';
 import { shortDate, dateMark, localDate, addDays } from '@/lib/domain/rules';
@@ -252,27 +253,13 @@ export function ItemScreen({ id, initialItem }: { id: string; initialItem?: Item
       <div className={`item-details ${show('steps') ? 'with-thread' : ''}`}>
         {show('steps') ? (
           <DocumentSection title="Steps" className="steps-section">
-            <ul className="document-list step-list">
-              {item.steps.map((step) => (
-                <li key={step.id} className="check-row">
-                  <input
-                    type="checkbox"
-                    aria-label={`Complete step: ${step.text}`}
-                    checked={step.done}
-                    onChange={() =>
-                      run(() => changeEntry('steps', step, { ...step, done: !step.done }))
-                    }
-                  />
-                  <InlineText
-                    className={step.done ? 'done-text' : ''}
-                    value={step.text}
-                    placeholder="Edit step"
-                    onDelete={() => changeEntry('steps', step)}
-                    onSave={(text) => changeEntry('steps', step, { ...step, text })}
-                  />
-                </li>
-              ))}
-            </ul>
+            <StepChecklist
+              steps={item.steps}
+              onToggle={(step) =>
+                run(() => changeEntry('steps', step, { ...step, done: !step.done }))
+              }
+              onEdit={(before, after) => changeEntry('steps', before, after)}
+            />
             {item.steps.length > 0 &&
             item.steps.every((step) => step.done) &&
             item.status === 'active' ? (
