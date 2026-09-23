@@ -2,7 +2,7 @@
 
 ## Status and stop boundary
 
-September 23 steps-first follow-up: approved for implementation and release.
+September 23 steps-first follow-up is live from app commit 141e827.
 See docs/steps-first-follow-up.md for validation and deployment receipt.
 The UI is now To-dos, with no redundant bottom/side navigation. Item leads with
 steps; a compact owner/date row opens People & timing. Independent Next action
@@ -13,6 +13,9 @@ with identical Back/Done scroll restoration, visible loading/error escape routes
 and authenticated deep-link lookup. Imported items use immutable optional urlId
 aliases; underlying IDs, logs, proposal targets and original URLs are preserved.
 No package versions changed. No AI calls or later milestone screens were added.
+GitHub CI 35886133736 passed. Production deployment dpl_HCVH1ALyE38EkaWE9wSusX2K6G2y
+is Ready at mitos.twelvedegrees.studio. Alias-compatible rules deployed and 37
+imported records received opaque aliases with exact content preservation verified.
 
 The records below describe earlier releases; this follow-up supersedes their
 always-visible People/Dates controls and independent Next action behavior.

@@ -64,6 +64,20 @@ preserve existing aliases. Do not rerun the original cloud seed to perform this 
 
 ## Release
 
-Pending final build, commit, production deployment, rules update and URL backfill.
-The production dry run found 37 imported records without aliases. Private migration
-backups and deployment receipts remain ignored under exports/ and .tools/.
+- App commit: `141e82729c9a36d3ea27af1e338c8ab636952310`, pushed to main.
+- GitHub CI: [35886133736](https://github.com/Andrew-C-Blevins/mitos/actions/runs/35886133736), success.
+- Production: `dpl_HCVH1ALyE38EkaWE9wSusX2K6G2y`, Ready,
+  [custom domain](https://mitos.twelvedegrees.studio) alias confirmed.
+- URL: https://mitos-am26da1ug-andrew-c-blevins-projects.vercel.app
+- Alias-compatible Firebase rules/indexes deployed successfully. Atomic backfill
+  added aliases to 37 imported records. Post-migration comparison verified all 37
+  retained their exact content, apart from the added alias and version increment.
+- Published Item and Settings bundles contain the new UI; HTTPS home, manifest,
+  icon and styling passed. Session, export and old/opaque item API paths reject
+  unauthenticated requests; item responses use no-store. Deployment error-log scan
+  returned no entries. This is a release check, not a new ongoing monitoring service.
+- No production to-do or person was deleted by verification. Local fixtures removed;
+  development/production preview servers and emulators stopped; test ports are free.
+
+Private migration backups and deployment receipts remain ignored under exports/
+and .tools/. Reload existing open app tabs once to load the alias-aware schema.
