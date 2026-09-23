@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Plus, List, LogOut, Settings } from 'lucide-react';
+import { Plus, LogOut, Settings } from 'lucide-react';
 import { SaveFeedback } from './save-feedback';
 import { SaveToastProvider } from './save-toast';
 import { logout, useSession } from './auth-provider';
@@ -64,9 +64,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
         ) : null}
-        <main className="app-content">
-          {plannerOpen ? <PlannerWorkspace>{children}</PlannerWorkspace> : children}
-        </main>
+        <main className="app-content">{plannerOpen ? <PlannerWorkspace /> : children}</main>
         <button
           className="capture-fab"
           onClick={() => setCaptureOpen(true)}
@@ -74,24 +72,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Plus size={22} strokeWidth={1.8} />
         </button>
-        <nav className="bottom-nav" aria-label="Main navigation">
-          <Link
-            href="/"
-            className={plannerOpen ? 'selected' : ''}
-            aria-current={plannerOpen ? 'page' : undefined}
-          >
-            <List size={16} />
-            <span>Everything</span>
-          </Link>
-          <Link
-            href="/settings"
-            className={`desktop-settings ${pathname === '/settings' ? 'selected' : ''}`}
-            aria-current={pathname === '/settings' ? 'page' : undefined}
-          >
-            <Settings size={16} />
-            <span>Settings</span>
-          </Link>
-        </nav>
         <CaptureSheet
           open={captureOpen}
           onClose={() => setCaptureOpen(false)}

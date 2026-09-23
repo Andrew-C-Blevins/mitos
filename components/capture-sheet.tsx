@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { useModalDialog } from './use-modal-dialog';
 import { useSession } from './auth-provider';
 import { capture } from '@/lib/data/client/items';
 import { CAPTURE_LIMIT } from '@/lib/domain/input';
@@ -19,18 +20,18 @@ export function CaptureSheet({
     input = useRef<HTMLTextAreaElement>(null),
     [text, setText] = useState('');
   const { viewer } = useSession();
+  useModalDialog(open, dialog);
   useEffect(() => {
-    if (open) {
-      dialog.current?.showModal();
-      input.current?.focus();
-    } else dialog.current?.close();
+    if (open) input.current?.focus({ preventScroll: true });
   }, [open]);
   return (
     <dialog
       ref={dialog}
       className="capture-sheet"
-      onCancel={onClose}
-      onClose={onClose}
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       aria-labelledby="capture-heading"
     >
       <div className="sheet-heading">

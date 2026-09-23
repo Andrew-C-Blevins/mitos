@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useId, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
+import { useModalDialog } from './use-modal-dialog';
 import type { Item } from '@/lib/types';
 import { deleteItem, subscribeItems } from '@/lib/data/client/items';
 import { saveError } from '@/lib/domain/input';
@@ -22,9 +23,7 @@ export function DeleteItemDialog({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [hasNestedItems, setHasNestedItems] = useState(false);
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+  useModalDialog(true, dialog);
   useEffect(
     () =>
       subscribeItems(
@@ -53,8 +52,8 @@ export function DeleteItemDialog({
       {item.scope === 'household' ? <p>It will be removed for everyone in the household.</p> : null}
       {hasNestedItems ? (
         <p>
-          Nested to-dos will stay in Everything as separate entries. Checklist steps are deleted
-          with this to-do.
+          Nested to-dos will stay in To-dos as separate entries. Checklist steps are deleted with
+          this to-do.
         </p>
       ) : null}
       <div className="delete-dialog-actions">

@@ -1,6 +1,8 @@
 'use client';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { PlannerLink as Link, usePlannerNavigation } from './planner-navigation';
+import { itemHref } from '@/lib/domain/item-links';
+import { stepPreview } from '@/lib/domain/steps';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronDown, ChevronRight, Inbox } from 'lucide-react';
 import { categories, categoryLabels, type Item, type Person } from '@/lib/types';
@@ -15,8 +17,8 @@ import { SortableList, type ListMove } from './ui/sortable-list';
 
 type Filter = 'mine' | 'household' | 'karen' | 'all';
 type Sort = 'manual' | 'due' | 'target';
-export function EverythingScreen() {
-  const router = useRouter(),
+export function EverythingScreen({ onItems }: { onItems: (items: Item[]) => void }) {
+  const navigate = usePlannerNavigation(),
     pathname = usePathname();
   const { viewer } = useSession();
   const [items, setItems] = useState<Item[]>([]),
@@ -41,6 +43,7 @@ export function EverythingScreen() {
         viewer,
         (items, pending) => {
           latestItems.current = items;
+          onItems(items);
           const position = savedPosition.current;
           const updated = position && items.find((item) => item.id === position.id);
           if (position && (!updated || updated.version >= position.version))
@@ -60,7 +63,7 @@ export function EverythingScreen() {
           setLoaded(true);
         },
       ),
-    [viewer],
+    [viewer, onItems],
   );
   useEffect(
     () => subscribePeople(viewer.householdIds[0], setPeople, (error) => setError(error.message)),
@@ -193,9 +196,9 @@ export function EverythingScreen() {
     );
   }
   return (
-    <section className="everything" aria-label="Everything">
+    <section className="everything" aria-label="To-dos">
       <div className="list-heading">
-        <h1>Everything</h1>
+        <h1>To-dos</h1>
         <span className="mono count">{filtered.length}</span>
       </div>
       <div className="filters" aria-label="Filter items">
@@ -279,7 +282,7 @@ export function EverythingScreen() {
           {inboxOpen
             ? inbox.map((item) => (
                 <div className="inbox-row" key={item.id}>
-                  <Link href={`/items/${item.id}`}>{item.title}</Link>
+                  <Link href={itemHref(item)}>{item.title}</Link>
                   <div>
                     <button
                       onClick={() =>
@@ -290,7 +293,7 @@ export function EverythingScreen() {
                     >
                       Keep
                     </button>
-                    <Link href={`/items/${item.id}`}>Edit</Link>
+                    <Link href={itemHref(item)}>Edit</Link>
                     <button onClick={() => setDeleting(item)}>Delete</button>
                   </div>
                 </div>
@@ -344,7 +347,8 @@ export function EverythingScreen() {
             setItems((current) => current.filter((item) => item.id !== deleting.id));
             setDeleting(null);
             setMessage('To-do permanently deleted.');
-            if (pathname === `/items/${deleting.id}`) router.replace('/');
+            if (pathname === itemHref(deleting) || pathname === `/items/${deleting.id}`)
+              navigate('/', true);
           }}
         />
       ) : null}
@@ -367,7 +371,7 @@ interface RowProps {
 }
 function ItemRow(props: RowProps) {
   const { item, people, me, today } = props;
-  const selected = usePathname() === `/items/${item.id}`;
+  const selected = usePathname() === itemHref(item);
   const [offset, setOffset] = useState(0);
   const gesture = useRef<{
     x: number;
@@ -383,7 +387,7 @@ function ItemRow(props: RowProps) {
     .filter((id) => id !== me)
     .map((id) => people.find((person) => person.id === id))
     .filter(Boolean) as Person[];
-  const secondary = [item.nextAction, blocker, owners.map((person) => person.name).join(', ')]
+  const secondary = [stepPreview(item), blocker, owners.map((person) => person.name).join(', ')]
     .filter(Boolean)
     .join(' · ');
   return (
@@ -455,7 +459,7 @@ function ItemRow(props: RowProps) {
           </button>
         )}
         <Link
-          href={`/items/${item.id}`}
+          href={itemHref(item)}
           draggable={false}
           className="row-copy"
           aria-current={selected ? 'page' : undefined}

@@ -8,7 +8,12 @@ import { AuthError } from '@/lib/auth/require-auth';
 import type { Item, Viewer, Proposal, Section } from '@/lib/types';
 
 export async function getItem(id: string, viewer: Viewer): Promise<Item> {
-  const doc = await getAdmin().db.collection('items').doc(id).get();
+  const items = getAdmin().db.collection('items');
+  let doc = await items.doc(id).get();
+  if (!doc.exists && /^[a-f0-9]{32}$/.test(id)) {
+    const aliases = await items.where('urlId', '==', id).limit(2).get();
+    if (aliases.size === 1) doc = aliases.docs[0];
+  }
   if (!doc.exists) throw new AuthError('Item not found.', 404);
   const item = validateItem(decode<Item>(doc.id, doc.data()!));
   if (!canAccess(item, viewer)) throw new AuthError('Item not found.', 404);

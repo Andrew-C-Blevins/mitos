@@ -1,6 +1,7 @@
 import { Temporal } from '@js-temporal/polyfill';
 import rrule from 'rrule/dist/es5/rrule.js';
 import type { Context, Item, Recurrence } from '@/lib/types';
+import { stepPreview } from './steps';
 
 export interface RuleContext {
   now: string;
@@ -71,7 +72,7 @@ export function readiness(item: Item, context: RuleContext): Readiness {
   ) {
     return { state: 'unavailable', reason: `needs ${item.contexts.join(' or ')}` };
   }
-  return { state: 'ready', reason: item.nextAction ?? item.title };
+  return { state: 'ready', reason: stepPreview(item) ?? item.title };
 }
 export function nextOccurrence(item: Item, completedAt: string, timeZone: string): string {
   if (!item.recurrence) throw new Error('This item does not repeat.');
@@ -165,7 +166,7 @@ export function readyNow(items: Item[], query: ReadyQuery): { item: Item; reason
       item,
       reason: urgent(item)
         ? `Due ${shortDate(item.dueDate!)}`
-        : (item.nextAction ??
+        : (stepPreview(item) ??
           (item.effort === 'quick'
             ? 'A quick action with everything in place'
             : 'Everything you need is in place')),

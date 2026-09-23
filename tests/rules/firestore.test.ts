@@ -58,6 +58,15 @@ const karen = () =>
   env
     .authenticatedContext('karen-uid', { email: 'karen@mitos.test', email_verified: true })
     .firestore();
+it('allows normal edits after alias backfill but forbids changing or removing the alias', async () => {
+  await env.withSecurityRulesDisabled((context) =>
+    setDoc(doc(context.firestore(), 'items/alias-test'), item({ urlId: 'a'.repeat(32) })),
+  );
+  const ref = doc(andrew(), 'items/alias-test');
+  await assertSucceeds(updateDoc(ref, { title: 'Edited normally', version: increment(1) }));
+  await assertFails(updateDoc(ref, { urlId: 'b'.repeat(32), version: increment(1) }));
+  await assertFails(updateDoc(ref, { urlId: deleteField(), version: increment(1) }));
+});
 beforeAll(async () => {
   env = await initializeTestEnvironment({
     projectId: 'demo-mitos-rules',

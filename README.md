@@ -59,7 +59,7 @@ exports their current state to ignored `.emulator-data`; the next run restores i
 - Item, built first: inline editing and adds, all specified content sections,
   questions-to-decisions, settings disclosure, recurrence, newest 20 log entries
   with older paging, permanent original capture.
-- Everything: drag-handle manual ordering, Mine/Household/Karen/All and category/Waiting/
+- To-dos: drag-handle manual ordering, Mine/Household/Karen/All and category/Waiting/
   Recurring filters, nested display, swipe complete/snooze,
   visible drag preview and live displacement, full category labels, collapsed Snoozed,
   manual Inbox with aligned touch targets.
@@ -76,11 +76,17 @@ exports their current state to ignored `.emulator-data`; the next run restores i
 Ready, Due, Review, AI, Shortcut, handoff and MCP screens/routes are not
 enabled. Their later milestones require approval.
 Unbuilt navigation and Shape/Work on this actions are hidden. Keep only moves
-an existing Inbox item to Everything; no model call or duplicate item is created.
+an existing Inbox item to To-dos; no model call or duplicate item is created.
 
-Dates, snoozing, visibility and assignment are directly on Item. The duplicate
-ellipsis modal is removed. See the [reusable sortable component](components/ui/sortable-list/README.md)
-and [release notes](docs/reordering-follow-up.md).
+Item leads with the checklist and a compact assignee/date summary. Tapping that
+summary opens People & timing, containing assignment, visibility and dates.
+There is no separate Next action editor: the list previews the first unfinished
+step without AI calls. Unique former Next action text stays in a collapsed
+reference note. Checking every step offers completion without doing it automatically.
+The redundant one-tab navigation is removed. Back to list and Done both preserve
+list filters and scroll position. Capture and other sheets lock background scrolling.
+See [the follow-up](docs/steps-first-follow-up.md) and the
+[reusable sortable component](components/ui/sortable-list/README.md).
 Successful Item edits show a dismissible “Changes saved” toast near the bottom
 for seven seconds, independent of the field being edited.
 
@@ -183,7 +189,8 @@ manifest is reviewed and retirement is approved.
 
 - Firestore cannot field-update an object inside an array. Section arrays are
   retained: adds use `arrayUnion`; existing-entry edits run an online transaction
-  with preconditioned `arrayRemove`/`arrayUnion`. They never rewrite the whole array.
+  with an entry precondition and a replacement of that one section array, preserving
+  entry order. Transaction retries preserve concurrent edits; whole items are never replaced.
   Whole arrays of owners and contexts are intentionally conditional/scalar fields.
 - Confirmed Delete permanently removes the item, all log entries and its proposals
   in one authenticated server transaction. The original capture is retained until

@@ -90,6 +90,10 @@ export const itemSchema = z
   .object({
     id,
     title: text.max(500),
+    urlId: z
+      .string()
+      .regex(/^[a-f0-9]{32}$/)
+      .optional(),
     intent: text.optional(),
     status: z.enum(['inbox', 'active', 'done', 'cancelled']),
     scope: z.enum(['private', 'household']),

@@ -13,6 +13,13 @@ import { Check, X } from 'lucide-react';
 
 const SaveToastContext = createContext<{ saved: () => void; clear: () => void } | null>(null);
 
+const ToastState = createContext<{
+  notification: { id: number } | null;
+  setHovered: (value: boolean) => void;
+  setFocused: (value: boolean) => void;
+  clear: () => void;
+} | null>(null);
+
 export function SaveToastProvider({ children }: { children: ReactNode }) {
   const [notification, setNotification] = useState<{ id: number } | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -36,26 +43,10 @@ export function SaveToastProvider({ children }: { children: ReactNode }) {
 
   return (
     <SaveToastContext value={actions}>
-      {children}
-      <div className="save-toast-region">
-        <div role="status" aria-live="polite" aria-atomic="true">
-          {notification ? (
-            <div
-              className="save-toast"
-              onMouseEnter={() => setHovered(true)}
-              onMouseLeave={() => setHovered(false)}
-              onFocus={() => setFocused(true)}
-              onBlur={() => setFocused(false)}
-            >
-              <Check size={19} className="save-toast-check" aria-hidden="true" />
-              <span key={notification.id}>Changes saved</span>
-              <button type="button" aria-label="Dismiss save confirmation" onClick={clear}>
-                <X size={17} aria-hidden="true" />
-              </button>
-            </div>
-          ) : null}
-        </div>
-      </div>
+      <ToastState value={{ notification, setHovered, setFocused, clear }}>
+        {children}
+        <SaveToastViewport global />
+      </ToastState>
     </SaveToastContext>
   );
 }
@@ -64,4 +55,31 @@ export function useSaveToast() {
   const context = useContext(SaveToastContext);
   if (!context) throw new Error('useSaveToast requires SaveToastProvider.');
   return context;
+}
+
+export function SaveToastViewport({ global = false }: { global?: boolean }) {
+  const context = useContext(ToastState);
+  if (!context) return null;
+  const { notification, setHovered, setFocused, clear } = context;
+  return (
+    <div className={`save-toast-region ${global ? 'save-toast-global' : ''}`}>
+      <div role="status" aria-live="polite" aria-atomic="true">
+        {notification ? (
+          <div
+            className="save-toast"
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+          >
+            <Check size={19} className="save-toast-check" aria-hidden="true" />
+            <span key={notification.id}>Changes saved</span>
+            <button type="button" aria-label="Dismiss save confirmation" onClick={clear}>
+              <X size={17} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
 }

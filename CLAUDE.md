@@ -2,6 +2,21 @@
 
 ## Status and stop boundary
 
+September 23 steps-first follow-up: approved for implementation and release.
+See docs/steps-first-follow-up.md for validation and deployment receipt.
+The UI is now To-dos, with no redundant bottom/side navigation. Item leads with
+steps; a compact owner/date row opens People & timing. Independent Next action
+editing is retired; first unfinished step drives previews and rule reasons.
+Unique old instructions remain available as reference, without creating new work.
+Item navigation uses the documented native History API and persistent workspace,
+with identical Back/Done scroll restoration, visible loading/error escape routes,
+and authenticated deep-link lookup. Imported items use immutable optional urlId
+aliases; underlying IDs, logs, proposal targets and original URLs are preserved.
+No package versions changed. No AI calls or later milestone screens were added.
+
+The records below describe earlier releases; this follow-up supersedes their
+always-visible People/Dates controls and independent Next action behavior.
+
 Item save feedback is live from app commit ec9d74d: the inline Saved label beside
 Snooze is replaced by a shared seven-second bottom toast for all Item save paths.
 Errors keep their existing messages and history reads do not trigger success.
@@ -177,7 +192,8 @@ supports installed React 19.3.0. Exact versions are pinned in the lockfile.
 - lib/domain/proposals.ts: change classes, per-path preconditions, staleness.
 - lib/domain/rules.ts: local dates, readiness, recurrence and deterministic ranking.
 - lib/data/client/: Firebase browser reads and human writes; persistent cache on
-  secure origins; per-field updates and array transforms, no whole-item replacement.
+  secure origins; per-field updates, array adds and transactionally ordered section
+  edits, no whole-item replacement.
 - lib/data/admin/items.ts: authorized getItem/listItems and applyProposal only.
 - lib/data/admin/delete-item.ts: narrowly allowed human DELETE route; current
   membership/ownership, version confirmation, atomic item/log/proposal deletion.

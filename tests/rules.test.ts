@@ -94,7 +94,7 @@ describe('readiness', () => {
     expect(readiness(call, { ...context, now: '2026-11-02T13:59:00Z' }).state).toBe('unavailable');
     expect(readiness(call, { ...context, now: '2026-11-02T14:00:00Z' }).state).toBe('ready');
   });
-  it('matches context or anywhere and uses optional next action', () => {
+  it('matches context or anywhere and uses the first unfinished step', () => {
     expect(readiness(item({ contexts: ['computer'] }), { ...context, context: 'home' })).toEqual({
       state: 'unavailable',
       reason: 'needs computer',
@@ -106,7 +106,10 @@ describe('readiness', () => {
       readiness(item({ contexts: ['computer'] }), { ...context, context: 'computer' }).state,
     ).toBe('ready');
     expect(readiness(item(), { ...context, context: 'home' }).state).toBe('ready');
-    expect(readiness(item({ nextAction: 'Buy silicone' }), context).reason).toBe('Buy silicone');
+    expect(
+      readiness(item({ steps: [{ id: 'one', text: 'Buy silicone', done: false }] }), context)
+        .reason,
+    ).toBe('Buy silicone');
   });
 });
 describe('recurrence', () => {
@@ -244,7 +247,10 @@ describe('dates and deterministic ranking', () => {
     expect(readyNow(source, { ...context, minutes: 20 })).toHaveLength(2);
     expect(readyNow(source, { ...context, minutes: 89 })).toHaveLength(2);
     expect(readyNow(source, { ...context, minutes: 90 })).toHaveLength(3);
-    expect(readyNow([item({ nextAction: 'Buy caulk' })], context)[0].reason).toBe('Buy caulk');
+    expect(
+      readyNow([item({ steps: [{ id: 'one', text: 'Buy caulk', done: false }] })], context)[0]
+        .reason,
+    ).toBe('Buy caulk');
     expect(readyNow(source, context).map((row) => row.reason)).toEqual([
       'A quick action with everything in place',
       'Everything you need is in place',

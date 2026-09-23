@@ -31,6 +31,7 @@ import type { Item, LogEntry, Viewer, Section, SectionEntry } from '@/lib/types'
 // IDs only; no deleted content or history is retained here.
 const confirmedDeletions = new Set<string>();
 const deletionListeners = new Set<() => void>();
+const confirmedEdits = new Map<string, Item>();
 
 export function subscribeItems(
   viewer: Viewer,
@@ -40,13 +41,22 @@ export function subscribeItems(
   const { db } = getFirebase();
   const buckets = new Map<string, Item[]>(),
     pending = new Map<string, boolean>();
-  const emit = () =>
+  const emit = () => {
+    // Wait for every access bucket before declaring the list loaded.
+    if (buckets.size < queries.length) return;
     onItems(
       [...new Map([...buckets.values()].flat().map((item) => [item.id, item])).values()]
         .filter((item) => !confirmedDeletions.has(item.id))
+        .map((item) => {
+          const saved = confirmedEdits.get(item.id);
+          if (saved && item.version < saved.version) return saved;
+          confirmedEdits.delete(item.id);
+          return item;
+        })
         .sort((a, b) => (a.sortKey < b.sortKey ? -1 : a.sortKey > b.sortKey ? 1 : 0)),
       [...pending.values()].some(Boolean),
     );
+  };
   deletionListeners.add(emit);
   const queries = viewer.householdIds.flatMap((id) => [
     query(
@@ -230,8 +240,9 @@ export function editEntry(
       throw new Error(
         'This entry changed on another device. Read the latest version and try again.',
       );
-    const rows = item[section].filter((row) => row.id !== before.id);
-    if (after) rows.push(after as never);
+    const rows = after
+      ? item[section].map((row) => (row.id === before.id ? after : row))
+      : item[section].filter((row) => row.id !== before.id);
     const updatedAt = Timestamp.now();
     const saved = validateItem({
       ...item,
@@ -239,12 +250,16 @@ export function editEntry(
       version: item.version + 1,
       updatedAt: updatedAt.toDate().toISOString(),
     });
-    if (after) transaction.update(ref, { [section]: arrayRemove(encodeNested(before)) });
     transaction.update(ref, {
-      [section]: after ? arrayUnion(encodeNested(after)) : arrayRemove(encodeNested(before)),
+      // The transaction retries against the latest array, preserving order and other edits.
+      [section]: rows.map(encodeNested),
       version: increment(1),
       updatedAt,
     });
+    return saved;
+  }).then((saved) => {
+    confirmedEdits.set(saved.id, saved);
+    deletionListeners.forEach((notify) => notify());
     return saved;
   });
 }

@@ -38,7 +38,7 @@ afterAll(() => {
   vi.unstubAllGlobals();
   return env?.cleanup();
 });
-it('updates an already-open item after deleting successive steps, without resubscribing', async () => {
+it('updates steps in place and deletes successive steps without resubscribing', async () => {
   let current: Item | null = null;
   const stop = subscribeItem(
     'steps',
@@ -51,10 +51,17 @@ it('updates an already-open item after deleting successive steps, without resubs
   );
   try {
     await vi.waitFor(() => expect(current?.steps).toHaveLength(2));
+    const checked = await editEntry('steps', 'steps', current!.steps[0], {
+      ...current!.steps[0],
+      done: true,
+    });
+    expect(checked.steps.map((step) => step.id)).toEqual(['first', 'second']);
+    expect(checked.steps[0].done).toBe(true);
+    await vi.waitFor(() => expect(current?.steps[0].done).toBe(true));
     const saved = await editEntry('steps', 'steps', current!.steps[0]);
     // UI can use the confirmed result even before the listener catches up.
     expect(saved.steps.map((step) => step.id)).toEqual(['second']);
-    expect(saved.version).toBe(2);
+    expect(saved.version).toBe(3);
     await vi.waitFor(() => expect(current?.steps.map((step) => step.id)).toEqual(['second']));
     await editEntry('steps', 'steps', current!.steps[0]);
     await vi.waitFor(() => expect(current?.steps).toEqual([]));

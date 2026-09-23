@@ -8,6 +8,7 @@ import { setDefaultContext } from '@/lib/data/client/profile';
 import { contexts, type Context, type Person, type Household } from '@/lib/types';
 import { personColors, type PersonChange } from '@/lib/domain/people';
 import { SaveFeedback } from './save-feedback';
+import { DeletePersonDialog } from './delete-person-dialog';
 
 export function SettingsScreen() {
   const { user, profile, viewer } = useSession();
@@ -127,6 +128,7 @@ function HouseholdPeople({
   const { viewer } = useSession();
   const [people, setPeople] = useState<Person[] | null>(null);
   const [household, setHousehold] = useState<Household | null>(null);
+  const [deleting, setDeleting] = useState<Person | null>(null);
   const [pending, setPending] = useState('');
   const [error, setError] = useState('');
   useEffect(
@@ -218,17 +220,7 @@ function HouseholdPeople({
                     {person.status === 'active' ? 'Archive' : 'Restore'}
                   </button>
                   {person.status === 'archived' && !person.uid ? (
-                    <button
-                      disabled={Boolean(pending)}
-                      onClick={() => {
-                        if (
-                          window.confirm(
-                            `Delete the archived person ${person.name}? This is allowed only if no item refers to them.`,
-                          )
-                        )
-                          void change(person, { action: 'delete' });
-                      }}
-                    >
+                    <button disabled={Boolean(pending)} onClick={() => setDeleting(person)}>
                       Delete
                     </button>
                   ) : null}
@@ -282,6 +274,17 @@ function HouseholdPeople({
       ) : (
         <p role="status">Loading people…</p>
       )}
+      {deleting ? (
+        <DeletePersonDialog
+          person={deleting}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setPeople((current) => current?.filter((person) => person.id !== deleting.id) ?? null);
+            setDeleting(null);
+            onSaved('Archived person removed.');
+          }}
+        />
+      ) : null}
       {pending ? <SaveFeedback message="Saving…" /> : null}
       {error ? (
         <p className="error" role="alert">

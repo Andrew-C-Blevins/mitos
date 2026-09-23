@@ -1,5 +1,31 @@
 import { requireAuth, AuthError } from '@/lib/auth/require-auth';
 import { deleteItem } from '@/lib/data/admin/delete-item';
+import { getItem } from '@/lib/data/admin/items';
+
+export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const viewer = await requireAuth(request);
+    const { id } = await context.params;
+    if (!/^[\w-]{1,128}$/.test(id)) throw new AuthError('Invalid item.', 400);
+    return Response.json(
+      { item: await getItem(id, viewer) },
+      { headers: { 'Cache-Control': 'no-store' } },
+    );
+  } catch (error) {
+    return Response.json(
+      {
+        error:
+          error instanceof AuthError
+            ? error.message
+            : 'Could not open this to-do. Please try again.',
+      },
+      {
+        status: error instanceof AuthError ? error.status : 500,
+        headers: { 'Cache-Control': 'no-store' },
+      },
+    );
+  }
+}
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {

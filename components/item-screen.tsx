@@ -1,8 +1,7 @@
 'use client';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { PlannerLink as Link, usePlannerNavigation } from './planner-navigation';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, ChevronDown, Trash2 } from 'lucide-react';
+import { ArrowLeft, Check, ChevronDown, ChevronRight, Trash2, X } from 'lucide-react';
 import { saveError } from '@/lib/domain/input';
 import type { QueryDocumentSnapshot } from 'firebase/firestore';
 import {
@@ -34,6 +33,9 @@ import { DeleteItemDialog } from './delete-item-dialog';
 import { useSaveToast } from './save-toast';
 import { shortDate, dateMark, localDate, addDays } from '@/lib/domain/rules';
 import { newId } from '@/lib/domain/ids';
+import { previousAction } from '@/lib/domain/steps';
+import { useModalDialog } from './use-modal-dialog';
+import { SaveToastViewport } from './save-toast';
 
 function DocumentSection({
   title,
@@ -51,15 +53,15 @@ function DocumentSection({
     </section>
   );
 }
-type OptionalSection = 'intent' | 'nextAction' | Section;
-export function ItemScreen({ id }: { id: string }) {
-  const router = useRouter();
+type OptionalSection = 'intent' | Section;
+export function ItemScreen({ id, initialItem }: { id: string; initialItem?: Item }) {
+  const navigate = usePlannerNavigation();
   const { viewer, profile } = useSession();
   const toast = useSaveToast();
   const logInitialized = useRef(false);
   const confirmedVersion = useRef(0);
-  const [item, setItem] = useState<Item | null>(null),
-    [loaded, setLoaded] = useState(false),
+  const [item, setItem] = useState<Item | null>(initialItem ?? null),
+    [loaded, setLoaded] = useState(Boolean(initialItem)),
     [people, setPeople] = useState<Person[]>([]),
     [log, setLog] = useState<LogEntry[]>([]),
     [older, setOlder] = useState<LogEntry[]>([]),
@@ -67,7 +69,10 @@ export function ItemScreen({ id }: { id: string }) {
     [hasOlder, setHasOlder] = useState(false),
     [error, setError] = useState(''),
     [revealed, setRevealed] = useState<OptionalSection | ''>(''),
-    [deleting, setDeleting] = useState<Item | null>(null);
+    [deleting, setDeleting] = useState<Item | null>(null),
+    [logisticsOpen, setLogisticsOpen] = useState(false);
+  const logisticsDialog = useRef<HTMLDialogElement>(null);
+  useModalDialog(logisticsOpen, logisticsDialog);
   useEffect(
     () =>
       subscribeItem(
@@ -138,7 +143,7 @@ export function ItemScreen({ id }: { id: string }) {
   if (!item)
     return (
       <article className="document">
-        <Link href="/">Back to Everything</Link>
+        <Link href="/">Back to list</Link>
         <p role="alert">{error || 'This item is not available to your account.'}</p>
       </article>
     );
@@ -148,7 +153,7 @@ export function ItemScreen({ id }: { id: string }) {
       Intl.DateTimeFormat().resolvedOptions().timeZone,
     ),
     mark = dateMark(item, today);
-  const field = (key: 'title' | 'intent' | 'nextAction' | 'outcome', text: string) =>
+  const field = (key: 'title' | 'intent' | 'outcome', text: string) =>
     updateFields(item, { [key]: text || null }, viewer);
   const show = (section: OptionalSection) =>
     revealed === section ||
@@ -168,7 +173,7 @@ export function ItemScreen({ id }: { id: string }) {
   return (
     <article className="document">
       <Link href="/" className="back-link">
-        <ArrowLeft size={16} /> Everything
+        <ArrowLeft size={16} /> Back to list
       </Link>
       <div className="item-actions">
         <button
@@ -202,7 +207,7 @@ export function ItemScreen({ id }: { id: string }) {
               run(() => updateFields(item, { status: 'active' }, viewer, 'Kept from Inbox.'))
             }
           >
-            Keep in Everything
+            Keep in To-dos
           </button>
         </div>
       ) : null}
@@ -227,113 +232,59 @@ export function ItemScreen({ id }: { id: string }) {
           />
         </DocumentSection>
       ) : null}
-      <div className={`item-details ${show('nextAction') || show('steps') ? 'with-thread' : ''}`}>
-        {show('nextAction') ? (
-          <DocumentSection title="Next action" className="next-action">
-            <InlineText
-              value={item.nextAction}
-              placeholder="What moves this forward?"
-              onSave={(text) => field('nextAction', text)}
-            />
-          </DocumentSection>
-        ) : null}
-        <DocumentSection title="People">
-          <div className="settings-fields item-people">
-            <label>
-              Visibility
-              <select
-                value={item.scope}
-                onChange={(event) =>
-                  run(() =>
-                    updateFields(
-                      item,
-                      {
-                        scope: event.target.value as Item['scope'],
-                        ...(event.target.value === 'private'
-                          ? {
-                              ownerPersonIds: [
-                                ...new Set([...item.ownerPersonIds, viewer.personId]),
-                              ],
-                            }
-                          : {}),
-                      },
-                      viewer,
-                    ),
-                  )
-                }
-              >
-                <option value="private">Private to owners</option>
-                <option value="household">Household</option>
-              </select>
-            </label>
-            <fieldset>
-              <legend>Assigned to</legend>
-              {activePeople.map((person) => (
-                <label key={person.id} className="check-row">
+      <button
+        className="logistics-summary"
+        aria-label="People & timing"
+        aria-haspopup="dialog"
+        onClick={() => setLogisticsOpen(true)}
+      >
+        <span>
+          {item.ownerPersonIds
+            .map((id) => people.find((person) => person.id === id)?.name)
+            .filter(Boolean)
+            .join(', ') || (item.ownerPersonIds.length ? 'Assigned' : 'Unassigned')}
+        </span>
+        <span className={mark?.overdue ? 'overdue' : ''}>
+          {item.dueDate ? `Due ${shortDate(item.dueDate)}` : mark?.text}
+          <ChevronRight size={16} />
+        </span>
+      </button>
+      <div className={`item-details ${show('steps') ? 'with-thread' : ''}`}>
+        {show('steps') ? (
+          <DocumentSection title="Steps" className="steps-section">
+            <ul className="document-list step-list">
+              {item.steps.map((step) => (
+                <li key={step.id} className="check-row">
                   <input
                     type="checkbox"
-                    checked={item.ownerPersonIds.includes(person.id)}
+                    aria-label={`Complete step: ${step.text}`}
+                    checked={step.done}
                     onChange={() =>
-                      run(() =>
-                        updateFields(
-                          item,
-                          {
-                            ownerPersonIds: item.ownerPersonIds.includes(person.id)
-                              ? item.ownerPersonIds.filter((id) => id !== person.id)
-                              : [...item.ownerPersonIds, person.id],
-                          },
-                          viewer,
-                        ),
-                      )
+                      run(() => changeEntry('steps', step, { ...step, done: !step.done }))
                     }
                   />
-                  <span className="owner-dot" style={{ background: person.color }} />
-                  {person.name}
-                </label>
+                  <InlineText
+                    className={step.done ? 'done-text' : ''}
+                    value={step.text}
+                    placeholder="Edit step"
+                    onDelete={() => changeEntry('steps', step)}
+                    onSave={(text) => changeEntry('steps', step, { ...step, text })}
+                  />
+                </li>
               ))}
-            </fieldset>
-          </div>
-        </DocumentSection>
-        <DocumentSection title="Dates">
-          <div className="date-fields">
-            {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
-              <label key={key}>
-                <span>
-                  {
-                    {
-                      dueDate: 'Due',
-                      targetDate: 'Target',
-                      availableFrom: 'Available from',
-                      snoozeUntil: 'Snoozed until',
-                    }[key]
-                  }
-                </span>
-                <input
-                  className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
-                  type="date"
-                  value={item[key] ?? ''}
-                  onChange={(event) =>
-                    run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
-                  }
-                />
-              </label>
-            ))}
-          </div>
-          <div className="inline-actions date-shortcuts">
-            <button
-              onClick={() =>
-                run(() => updateFields(item, { snoozeUntil: addDays(today, 7) }, viewer))
-              }
-            >
-              Snooze 1 week
-            </button>
-            {item.snoozeUntil ? (
-              <button onClick={() => run(() => updateFields(item, { snoozeUntil: null }, viewer))}>
-                Unsnooze
-              </button>
+            </ul>
+            {item.steps.length > 0 &&
+            item.steps.every((step) => step.done) &&
+            item.status === 'active' ? (
+              <p className="steps-finished">
+                All steps checked.{' '}
+                <button onClick={() => run(() => complete(item, viewer))}>Complete to-do</button>
+              </p>
             ) : null}
-          </div>
-        </DocumentSection>
+            <InlineText placeholder="Add a step…" onSave={(text) => add('steps', text)} />
+          </DocumentSection>
+        ) : null}
+
         {show('needs') ? (
           <DocumentSection title="Needs">
             <ul className="document-list">
@@ -442,32 +393,6 @@ export function ItemScreen({ id }: { id: string }) {
             <InlineText placeholder="Add a decision…" onSave={(text) => add('decisions', text)} />
           </DocumentSection>
         ) : null}
-        {show('steps') ? (
-          <DocumentSection title="Steps" className="steps-section">
-            <ul className="document-list step-list">
-              {item.steps.map((step) => (
-                <li key={step.id} className="check-row">
-                  <input
-                    type="checkbox"
-                    aria-label={`Complete step: ${step.text}`}
-                    checked={step.done}
-                    onChange={() =>
-                      run(() => changeEntry('steps', step, { ...step, done: !step.done }))
-                    }
-                  />
-                  <InlineText
-                    className={step.done ? 'done-text' : ''}
-                    value={step.text}
-                    placeholder="Edit step"
-                    onDelete={() => changeEntry('steps', step)}
-                    onSave={(text) => changeEntry('steps', step, { ...step, text })}
-                  />
-                </li>
-              ))}
-            </ul>
-            <InlineText placeholder="Add a step…" onSave={(text) => add('steps', text)} />
-          </DocumentSection>
-        ) : null}
       </div>
       <DocumentSection title="Notes & history">
         <InlineText
@@ -475,6 +400,15 @@ export function ItemScreen({ id }: { id: string }) {
           multiline
           onSave={(text) => addNote(item.id, text, viewer)}
         />
+        {previousAction(item) ? (
+          <details className="history-disclosure previous-action">
+            <summary>Previous action note</summary>
+            <p>{previousAction(item)}</p>
+            <p className="secondary">
+              Kept from the former Next action field. Your checklist now determines the next step.
+            </p>
+          </details>
+        ) : null}
         <details className="history-disclosure">
           <summary>Show notes and original capture ({log.length + older.length})</summary>
           <ol className="log-list">
@@ -542,7 +476,6 @@ export function ItemScreen({ id }: { id: string }) {
           {(
             [
               ['intent', 'Why'],
-              ['nextAction', 'Next action'],
               ['needs', 'Needs'],
               ['questions', 'Open questions'],
               ['decisions', 'Decisions'],
@@ -674,11 +607,136 @@ export function ItemScreen({ id }: { id: string }) {
           Done
         </Link>
       </div>
+      <dialog
+        ref={logisticsDialog}
+        className="capture-sheet logistics-sheet"
+        aria-labelledby="logistics-heading"
+        onCancel={(event) => {
+          event.preventDefault();
+          setLogisticsOpen(false);
+        }}
+      >
+        <div className="sheet-heading">
+          <h2 id="logistics-heading">People & timing</h2>
+          <button
+            autoFocus
+            type="button"
+            aria-label="Close people and timing"
+            onClick={() => setLogisticsOpen(false)}
+          >
+            <X size={20} />
+          </button>
+        </div>
+        {error ? (
+          <p role="alert" className="notice">
+            {error}
+          </p>
+        ) : null}
+        <DocumentSection title="People">
+          <div className="settings-fields item-people">
+            <label>
+              Visibility
+              <select
+                value={item.scope}
+                onChange={(event) =>
+                  run(() =>
+                    updateFields(
+                      item,
+                      {
+                        scope: event.target.value as Item['scope'],
+                        ...(event.target.value === 'private'
+                          ? {
+                              ownerPersonIds: [
+                                ...new Set([...item.ownerPersonIds, viewer.personId]),
+                              ],
+                            }
+                          : {}),
+                      },
+                      viewer,
+                    ),
+                  )
+                }
+              >
+                <option value="private">Private to owners</option>
+                <option value="household">Household</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Assigned to</legend>
+              {activePeople.map((person) => (
+                <label key={person.id} className="check-row">
+                  <input
+                    type="checkbox"
+                    checked={item.ownerPersonIds.includes(person.id)}
+                    onChange={() =>
+                      run(() =>
+                        updateFields(
+                          item,
+                          {
+                            ownerPersonIds: item.ownerPersonIds.includes(person.id)
+                              ? item.ownerPersonIds.filter((id) => id !== person.id)
+                              : [...item.ownerPersonIds, person.id],
+                          },
+                          viewer,
+                        ),
+                      )
+                    }
+                  />
+                  <span className="owner-dot" style={{ background: person.color }} />
+                  {person.name}
+                </label>
+              ))}
+            </fieldset>
+          </div>
+        </DocumentSection>
+        <DocumentSection title="Dates">
+          <div className="date-fields">
+            {(['dueDate', 'targetDate', 'availableFrom', 'snoozeUntil'] as const).map((key) => (
+              <label key={key}>
+                <span>
+                  {
+                    {
+                      dueDate: 'Due',
+                      targetDate: 'Target',
+                      availableFrom: 'Available from',
+                      snoozeUntil: 'Snoozed until',
+                    }[key]
+                  }
+                </span>
+                <input
+                  className={key === 'dueDate' && mark?.overdue ? 'overdue' : ''}
+                  type="date"
+                  value={item[key] ?? ''}
+                  onChange={(event) =>
+                    run(() => updateFields(item, { [key]: event.target.value || null }, viewer))
+                  }
+                />
+              </label>
+            ))}
+          </div>
+          <div className="inline-actions date-shortcuts">
+            <button
+              onClick={() =>
+                run(() => updateFields(item, { snoozeUntil: addDays(today, 7) }, viewer))
+              }
+            >
+              Snooze 1 week
+            </button>
+            {item.snoozeUntil ? (
+              <button onClick={() => run(() => updateFields(item, { snoozeUntil: null }, viewer))}>
+                Unsnooze
+              </button>
+            ) : null}
+          </div>
+        </DocumentSection>
+
+        <SaveToastViewport />
+      </dialog>
       {deleting ? (
         <DeleteItemDialog
           item={deleting}
           onClose={() => setDeleting(null)}
-          onDeleted={() => router.replace('/')}
+          onDeleted={() => navigate('/', true)}
         />
       ) : null}
     </article>

@@ -1,12 +1,13 @@
 import { beforeEach, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
-const mocks = vi.hoisted(() => ({ auth: vi.fn(), remove: vi.fn() }));
+const mocks = vi.hoisted(() => ({ auth: vi.fn(), remove: vi.fn(), get: vi.fn() }));
 vi.mock('@/lib/auth/require-auth', async (original) => ({
   ...(await original<typeof import('@/lib/auth/require-auth')>()),
   requireAuth: mocks.auth,
 }));
 vi.mock('@/lib/data/admin/delete-item', () => ({ deleteItem: mocks.remove }));
-import { DELETE } from '@/app/api/items/[id]/route';
+vi.mock('@/lib/data/admin/items', () => ({ getItem: mocks.get }));
+import { DELETE, GET } from '@/app/api/items/[id]/route';
 import { AuthError } from '@/lib/auth/require-auth';
 const viewer = { uid: 'user', personId: 'andrew', householdIds: ['blevins'] };
 const context = { params: Promise.resolve({ id: 'item' }) };
@@ -16,6 +17,21 @@ const request = (body: unknown = { version: 3 }) =>
     body: JSON.stringify(body),
   });
 beforeEach(() => vi.resetAllMocks());
+it('authenticates item links, excludes caching and never exposes internal lookup errors', async () => {
+  mocks.auth.mockRejectedValueOnce(new AuthError());
+  expect((await GET(new Request('http://localhost'), context)).status).toBe(401);
+  expect(mocks.get).not.toHaveBeenCalled();
+  mocks.auth.mockResolvedValue(viewer);
+  mocks.get.mockResolvedValue({ id: 'item' });
+  const response = await GET(new Request('http://localhost'), context);
+  expect(await response.json()).toEqual({ item: { id: 'item' } });
+  expect(response.headers.get('cache-control')).toBe('no-store');
+  expect(mocks.get).toHaveBeenCalledWith('item', viewer);
+  mocks.get.mockRejectedValueOnce(new Error('Private database details'));
+  expect(await (await GET(new Request('http://localhost'), context)).json()).toEqual({
+    error: 'Could not open this to-do. Please try again.',
+  });
+});
 it('requires authentication before deletion and uses only the verified viewer', async () => {
   mocks.auth.mockRejectedValueOnce(new AuthError());
   expect((await DELETE(request(), context)).status).toBe(401);

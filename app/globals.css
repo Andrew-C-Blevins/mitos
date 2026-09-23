@@ -193,7 +193,7 @@ h1,
   max-width: 680px;
   min-height: 100dvh;
   margin: 0 auto;
-  padding-bottom: calc(9rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 .app-header {
   height: 88px;
@@ -513,34 +513,7 @@ summary::-webkit-details-marker {
 .inbox-prompt button {
   color: var(--accent);
 }
-.bottom-nav {
-  position: fixed;
-  z-index: 5;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(100%, 680px);
-  background: var(--surface);
-  border-top: 1px solid var(--line);
-  display: flex;
-  padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
-}
-.bottom-nav > * {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  font-size: 0.61rem;
-  color: var(--muted);
-}
-.bottom-nav .selected {
-  color: var(--accent);
-  background: var(--selected);
-  border-radius: 12px;
-}
+
 .capture-fab {
   position: fixed;
   z-index: 6;
@@ -648,9 +621,7 @@ summary::-webkit-details-marker {
 .account > a[aria-current] {
   color: var(--accent);
 }
-.bottom-nav > .desktop-settings {
-  display: none;
-}
+
 .planner-workspace:not(.item-open) .item-pane,
 .planner-workspace.item-open .list-pane {
   display: none;
@@ -856,7 +827,7 @@ summary::-webkit-details-marker {
     max-width: none;
     height: 100dvh;
     min-height: 0;
-    padding: 88px 0 0 172px;
+    padding: 88px 0 0 24px;
   }
   .app-header {
     position: fixed;
@@ -869,31 +840,7 @@ summary::-webkit-details-marker {
     height: 100%;
     overflow: auto;
   }
-  .bottom-nav {
-    left: 0;
-    top: 88px;
-    bottom: 0;
-    transform: none;
-    width: 172px;
-    border-top: 0;
-    background: var(--paper);
-    padding: 24px 12px;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 4px;
-  }
-  .bottom-nav > * {
-    flex: none;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 0 12px;
-    font-size: 0.85rem;
-  }
-  .bottom-nav > .desktop-settings {
-    display: flex;
-    margin-top: auto;
-  }
+
   .capture-fab {
     right: 28px;
     bottom: 28px;
@@ -1384,7 +1331,7 @@ summary::-webkit-details-marker {
   position: fixed;
   z-index: 20;
   inset-inline: 16px;
-  bottom: calc(151px + env(safe-area-inset-bottom));
+  bottom: calc(90px + env(safe-area-inset-bottom));
   display: flex;
   justify-content: center;
   pointer-events: none;
@@ -1434,5 +1381,92 @@ summary::-webkit-details-marker {
       opacity: 1;
       transform: translateY(0);
     }
+  }
+}
+
+/* Sheets stay within the visible viewport, including above the iOS keyboard. */
+.capture-sheet {
+  position: fixed;
+  inset: auto;
+  left: 50%;
+  top: calc(var(--sheet-top, 0px) + var(--sheet-height, 100dvh));
+  transform: translate(-50%, -100%);
+  margin: 0;
+  max-height: calc(var(--sheet-height, 100dvh) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.capture-fab {
+  bottom: calc(22px + env(safe-area-inset-bottom));
+}
+.logistics-summary {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  min-height: 48px;
+  padding: 8px 0;
+  margin-top: 12px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: left;
+}
+.logistics-summary > span:last-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.logistics-summary > span:first-child {
+  overflow-wrap: anywhere;
+}
+.logistics-sheet .sheet-heading {
+  position: sticky;
+  top: -20px;
+  background: var(--surface);
+  z-index: 2;
+  padding: 12px 0;
+}
+.logistics-sheet .document-section {
+  margin: 20px 0;
+}
+.steps-finished {
+  color: var(--accent);
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+.steps-finished button {
+  text-decoration: underline;
+  min-height: 44px;
+}
+.previous-action p {
+  margin: 10px 0;
+  white-space: pre-wrap;
+}
+body:has(dialog[open]) .save-toast-global {
+  display: none;
+}
+dialog .save-toast-region {
+  position: fixed;
+  left: 50%;
+  bottom: calc(20px + env(safe-area-inset-bottom));
+  margin: 0;
+  padding: 0;
+  width: calc(100% - 32px);
+  transform: translateX(-50%);
+}
+.item-actions {
+  float: right;
+  padding: 0;
+}
+.item-title {
+  clear: both;
+}
+@media (min-width: 1200px) {
+  .capture-sheet {
+    top: calc(var(--sheet-top, 0px) + var(--sheet-height, 100dvh) / 2);
+    transform: translate(-50%, -50%);
   }
 }

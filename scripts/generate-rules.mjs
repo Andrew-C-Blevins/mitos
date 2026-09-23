@@ -50,7 +50,8 @@ service cloud.firestore {
     }
     function validItem(d) {
       return d.keys().hasAll(['title', 'status', 'scope', 'householdId', 'ownerPersonIds', 'createdBy', 'category', 'effort', 'focus', 'contexts', 'businessHours', 'needs', 'questions', 'decisions', 'steps', 'links', 'sortKey', 'version', 'createdAt', 'updatedAt'])
-        && d.keys().hasOnly(['title', 'intent', 'status', 'scope', 'householdId', 'ownerPersonIds', 'createdBy', 'category', 'outcome', 'nextAction', 'effort', 'focus', 'contexts', 'businessHours', 'dueDate', 'targetDate', 'snoozeUntil', 'availableFrom', 'needs', 'questions', 'decisions', 'steps', 'links', 'recurrence', 'parentId', 'sortKey', 'version', 'historicalOwnerNames', 'createdAt', 'updatedAt', 'completedAt'])
+        && d.keys().hasOnly(['urlId', 'title', 'intent', 'status', 'scope', 'householdId', 'ownerPersonIds', 'createdBy', 'category', 'outcome', 'nextAction', 'effort', 'focus', 'contexts', 'businessHours', 'dueDate', 'targetDate', 'snoozeUntil', 'availableFrom', 'needs', 'questions', 'decisions', 'steps', 'links', 'recurrence', 'parentId', 'sortKey', 'version', 'historicalOwnerNames', 'createdAt', 'updatedAt', 'completedAt'])
+        && (!('urlId' in d) || (d.urlId is string && d.urlId.matches('^[a-f0-9]{32}$')))
         && d.title is string && d.title.size() > 0 && d.title.size() <= 500
         && d.status in ['inbox', 'active', 'done', 'cancelled'] && d.scope in ['private', 'household']
         && d.householdId is string && d.createdBy is string
@@ -98,12 +99,12 @@ service cloud.firestore {
     }
     match /items/{id} {
       allow read: if access(resource.data);
-      allow create: if access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
+      allow create: if !('urlId' in request.resource.data) && access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
         && request.resource.data.needs.size() == 0 && request.resource.data.questions.size() == 0 && request.resource.data.decisions.size() == 0 && request.resource.data.steps.size() == 0 && request.resource.data.links.size() == 0
         && request.resource.data.createdBy == request.auth.uid && request.resource.data.version == 1
         && getAfter(/databases/$(database)/documents/items/$(id)/log/capture).data.by == request.auth.uid
         && getAfter(/databases/$(database)/documents/items/$(id)/log/capture).data.kind == 'capture';
-      allow update: if access(resource.data) && access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
+      allow update: if !request.resource.data.diff(resource.data).affectedKeys().hasAny(['urlId']) && access(resource.data) && access(request.resource.data) && validItem(request.resource.data) && validParent(request.resource.data, id)
         && validNestedChanges(resource.data, request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.householdId == resource.data.householdId && request.resource.data.version == resource.data.version + 1;
